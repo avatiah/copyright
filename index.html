@@ -2,136 +2,153 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Copyright Certificate Creator</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
+        /* Общие стили интерфейса */
         body { font-family: 'Segoe UI', sans-serif; background: #eaedef; margin: 0; display: flex; padding: 20px; gap: 20px; }
         
-        /* Меню управления */
         .no-print { 
             width: 350px; background: #2c3e50; color: white; padding: 25px; 
-            border-radius: 12px; height: 92vh; position: sticky; top: 20px; overflow-y: auto; 
+            border-radius: 12px; height: 90vh; position: sticky; top: 20px; overflow-y: auto; 
         }
-        .no-print h2 { font-size: 18px; border-bottom: 1px solid #34495e; padding-bottom: 10px; margin-top: 0; }
+        .no-print h2 { font-size: 18px; border-bottom: 1px solid #455d7a; padding-bottom: 10px; margin-top: 0; }
         .no-print label { display: block; margin-top: 15px; font-size: 11px; color: #bdc3c7; text-transform: uppercase; }
         .no-print input { width: 100%; padding: 10px; margin: 5px 0; border-radius: 4px; border: none; background: #34495e; color: white; box-sizing: border-box; }
-        .no-print button { width: 100%; padding: 15px; margin-top: 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        .no-print button { width: 100%; padding: 14px; margin-top: 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.3s; }
         
         .btn-pdf { background: #27ae60; color: white; }
+        .btn-pdf:hover { background: #2ecc71; }
         .btn-url { background: #2980b9; color: white; }
+        .btn-url:hover { background: #3498db; }
 
-        /* РЕЖИМ ПРОСМОТРА (VIEW MODE) */
+        /* СКРЫТИЕ МЕНЮ В РЕЖИМЕ ССЫЛКИ */
         body.is-view-mode { justify-content: center; background: #525659; }
         body.is-view-mode .no-print { display: none !important; }
-        body.is-view-mode #cert-page { box-shadow: 0 0 50px rgba(0,0,0,0.5); }
 
-        /* Сертификат A4 */
+        /* Контейнер Сертификата (Строго A4) */
         #cert-page {
             width: 210mm;
-            height: 295mm;
+            height: 297mm;
             background: white;
             padding: 15mm;
             box-sizing: border-box;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
             font-family: 'Times New Roman', serif;
             display: flex;
             flex-direction: column;
             overflow: hidden;
+            position: relative;
         }
 
         .border-main { border: 5px double #1a1a1a; height: 100%; padding: 10mm; box-sizing: border-box; display: flex; flex-direction: column; }
+        
         .header { text-align: center; border-bottom: 2px solid #1a1a1a; padding-bottom: 15px; margin-bottom: 30px; }
-        .header h1 { font-size: 34pt; margin: 0; text-transform: uppercase; }
+        .header h1 { font-size: 34pt; margin: 0; text-transform: uppercase; letter-spacing: 2px; }
         
         .content { flex-grow: 1; font-size: 16pt; line-height: 1.7; color: #1a1a1a; }
         .field { font-weight: bold; border-bottom: 1px solid #333; display: inline-block; min-width: 250px; padding: 0 5px; }
 
-        .hash-box { margin: 25px 0; padding: 15px; background: #f9f9f9; border-left: 5px solid #000; }
-        .hash-val { font-family: monospace; font-size: 10.5pt; word-break: break-all; }
+        .hash-box { margin: 20px 0; padding: 15px; background: #f9f9f9; border-left: 5px solid #000; }
+        .hash-val { font-family: monospace; font-size: 10pt; word-break: break-all; color: #333; }
 
-        .footer { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 30px; }
+        .footer { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 20px; }
         .sig-box { text-align: center; width: 220px; }
-        .sig-img { max-height: 70px; display: none; margin-bottom: -5px; }
-        .sig-line { border-top: 2px solid #000; padding-top: 5px; font-weight: bold; }
+        .sig-img { max-height: 80px; max-width: 200px; display: none; margin-bottom: -5px; }
+        .sig-line { border-top: 2px solid #000; padding-top: 5px; font-weight: bold; font-size: 13pt; }
 
         @media print {
             .no-print { display: none !important; }
-            body { background: white; padding: 0; display: block; }
-            #cert-page { box-shadow: none; margin: 0; border: none; width: 210mm; height: 297mm; }
+            body { background: white; padding: 0; }
+            #cert-page { box-shadow: none; margin: 0; }
         }
     </style>
 </head>
-<body id="mainBody">
+<body>
 
 <div class="no-print">
-    <h2>Certificate Setup</h2>
+    <h2>Certificate Dashboard</h2>
     
-    <label>ID</label>
+    <label>Registration ID</label>
     <input type="text" id="inID" placeholder="LION-001" oninput="sync()">
-    <label>Owner</label>
+
+    <label>Owner Name</label>
     <input type="text" id="inName" placeholder="Grill (avatiah)" oninput="sync()">
-    <label>Title</label>
+
+    <label>Work Title</label>
     <input type="text" id="inTitle" placeholder="Golden Lion" oninput="sync()">
-    <label>Work File (Hash)</label>
+
+    <label>1. Work File (to generate Hash)</label>
     <input type="file" id="inArt" onchange="calcHash(this)">
-    <label>Signature (PNG)</label>
+
+    <label>2. Signature (PNG)</label>
     <input type="file" id="inSig" onchange="loadSig(this)">
 
-    <button class="btn-pdf" onclick="savePDF()">DOWNLOAD PDF</button>
-    <button class="btn-url" onclick="getPreviewURL()">GET PREVIEW URL</button>
+    <button class="btn-pdf" onclick="savePDF()">SAVE AS PDF</button>
+    <button class="btn-url" onclick="getPreviewURL()">COPY PREVIEW LINK</button>
 </div>
 
 <div id="cert-page">
     <div class="border-main">
         <div class="header">
             <h1>CERTIFICATE</h1>
-            <p style="letter-spacing: 5px; margin: 5px 0 0;">OF AUTHENTICITY</p>
+            <p style="letter-spacing: 5px; margin: 5px 0 0; font-size: 12pt;">OF AUTHENTICITY</p>
         </div>
+
         <div class="content">
             <p>Registration Number: <span id="outID" class="field">PENDING</span></p>
-            <p>Creative work titled:</p>
-            <div id="outTitle" class="field" style="font-size: 20pt; font-style: italic;">[ASSET TITLE]</div>
-            <p>Exclusive property of:</p>
-            <div id="outName" class="field" style="font-size: 20pt;">[PROPRIETOR NAME]</div>
-            <p style="margin-top: 25px;">Date: <strong id="outDate"></strong></p>
+            <p>This is to certify that the creative work titled:</p>
+            <div id="outTitle" class="field" style="font-size: 20pt; font-style: italic;">[TITLE]</div>
+            
+            <p>Is the exclusive property of:</p>
+            <div id="outName" class="field" style="font-size: 20pt;">[NAME]</div>
+            
+            <p style="margin-top: 25px;">Issuance Date: <strong id="outDate"></strong></p>
+
             <div class="hash-box">
-                <div style="font-size: 10pt; font-weight: bold;">SHA-256 HASH</div>
+                <div style="font-size: 10pt; font-weight: bold; margin-bottom: 5px;">DIGITAL ASSET HASH (SHA-256)</div>
                 <div id="outHash" class="hash-val">Waiting for file...</div>
             </div>
         </div>
+
         <div class="footer">
             <div class="sig-box">
                 <img id="outSig" class="sig-img">
                 <div class="sig-line">Authorized Signature</div>
             </div>
-            <div style="text-align: right;">Location: <strong>Israel</strong></div>
+            <div style="text-align: right; font-size: 12pt;">
+                Location: <strong>Israel</strong>
+            </div>
         </div>
     </div>
 </div>
 
 <script>
-    let signatureBase64 = "";
+    let globalSig = "";
     document.getElementById('outDate').innerText = new Date().toLocaleDateString('en-GB', {day:'numeric', month:'long', year:'numeric'});
 
-    // ПРОВЕРКА: Если в URL есть данные, включаем режим просмотра
-    const urlParams = new URLSearchParams(window.location.search);
-    if(urlParams.get('view') === 'true') {
+    // ЛОГИКА РЕЖИМА ПРОСМОТРА
+    const params = new URLSearchParams(window.location.search);
+    if(params.get('mode') === 'view') {
         document.body.classList.add('is-view-mode');
-        document.getElementById('outID').innerText = urlParams.get('id');
-        document.getElementById('outName').innerText = urlParams.get('name');
-        document.getElementById('outTitle').innerText = urlParams.get('title');
-        document.getElementById('outHash').innerText = urlParams.get('hash');
-        if(urlParams.get('sig')) {
+        document.getElementById('outID').innerText = params.get('id');
+        document.getElementById('outName').innerText = params.get('name');
+        document.getElementById('outTitle').innerText = params.get('title');
+        document.getElementById('outHash').innerText = params.get('hash');
+        
+        const s = params.get('sig');
+        if(s) {
             const img = document.getElementById('outSig');
-            img.src = decodeURIComponent(urlParams.get('sig'));
+            img.src = decodeURIComponent(s);
             img.style.display = 'inline-block';
         }
     }
 
     function sync() {
         document.getElementById('outID').innerText = document.getElementById('inID').value || 'PENDING';
-        document.getElementById('outName').innerText = document.getElementById('inName').value || '[PROPRIETOR NAME]';
-        document.getElementById('outTitle').innerText = document.getElementById('inTitle').value || '[ASSET TITLE]';
+        document.getElementById('outName').innerText = document.getElementById('inName').value || '[NAME]';
+        document.getElementById('outTitle').innerText = document.getElementById('inTitle').value || '[TITLE]';
     }
 
     async function calcHash(input) {
@@ -147,9 +164,9 @@
         if(!input.files[0]) return;
         const reader = new FileReader();
         reader.onload = (e) => {
-            signatureBase64 = e.target.result;
+            globalSig = e.target.result;
             const img = document.getElementById('outSig');
-            img.src = signatureBase64;
+            img.src = globalSig;
             img.style.display = 'inline-block';
         };
         reader.readAsDataURL(input.files[0]);
@@ -160,12 +177,12 @@
         const name = encodeURIComponent(document.getElementById('outName').innerText);
         const title = encodeURIComponent(document.getElementById('outTitle').innerText);
         const hash = encodeURIComponent(document.getElementById('outHash').innerText);
-        const sig = encodeURIComponent(signatureBase64);
+        const sig = encodeURIComponent(globalSig);
 
-        const fullURL = window.location.origin + window.location.pathname + 
-                        `?view=true&id=${id}&name=${name}&title=${title}&hash=${hash}&sig=${sig}`;
+        const url = window.location.origin + window.location.pathname + 
+                    `?mode=view&id=${id}&name=${name}&title=${title}&hash=${hash}&sig=${sig}`;
         
-        prompt("Copy this URL for the client:", fullURL);
+        prompt("Copy this link for your customer:", url);
     }
 
     function savePDF() {
@@ -173,15 +190,16 @@
         const opt = {
             margin: 0,
             filename: 'Certificate.pdf',
-            image: { type: 'jpeg', quality: 0.98 },
+            image: { type: 'jpeg', quality: 1 },
             html2canvas: { scale: 2, useCORS: true },
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
         };
-        // Принудительно генерируем только одну страницу
-        html2pdf().set(opt).from(element).toPdf().get('pdf').then(function(pdf) {
-            const totalPages = pdf.internal.getNumberOfPages();
-            for (let i = totalPages; i > 1; i--) {
-                pdf.deletePage(i);
+
+        // Трюк для принудительной одной страницы
+        html2pdf().from(element).set(opt).toPdf().get('pdf').then(function(pdf) {
+            const pageCount = pdf.internal.getNumberOfPages();
+            if (pageCount > 1) {
+                pdf.deletePage(pageCount); // Удаляем лишнюю страницу, если она появилась
             }
         }).save();
     }
