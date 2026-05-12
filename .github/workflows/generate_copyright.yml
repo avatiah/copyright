@@ -1,0 +1,43 @@
+name: Generate Copyright PDF
+on:
+  workflow_dispatch:
+    inputs:
+      owner_name:
+        description: 'Copyright Owner'
+        required: true
+        default: 'Grill (avatiah)'
+      asset_title:
+        description: 'Design Title'
+        required: true
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Install Tools
+        run: pip install weasyprint
+
+      - name: Create PDF
+        run: |
+          python -c "
+          from weasyprint import HTML
+          import datetime
+          try:
+              with open('template.html', 'r') as f: content = f.read()
+              content = content.replace('{{ OWNER_NAME }}', '${{ github.event.inputs.owner_name }}')
+              content = content.replace('{{ ASSET_TITLE }}', '${{ github.event.inputs.asset_title }}')
+              content = content.replace('{{ DATE }}', datetime.datetime.now().strftime('%B %d, %Y'))
+              HTML(string=content, base_url='.').write_pdf('output/certificate.pdf')
+          except Exception as e: print(f'Error: {e}')
+          "
+
+      - name: Upload
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add output/certificate.pdf
+          git commit -m "Certificate for ${{ github.event.inputs.asset_title }}" || echo "No changes"
+          git push
