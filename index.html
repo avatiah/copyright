@@ -7,7 +7,7 @@
     <style>
         body { font-family: 'Segoe UI', sans-serif; background: #eaedef; margin: 0; display: flex; padding: 20px; gap: 20px; }
         
-        /* Боковое меню */
+        /* Меню управления */
         .no-print { 
             width: 350px; background: #2c3e50; color: white; padding: 25px; 
             border-radius: 12px; height: 92vh; position: sticky; top: 20px; overflow-y: auto; 
@@ -20,10 +20,15 @@
         .btn-pdf { background: #27ae60; color: white; }
         .btn-url { background: #2980b9; color: white; }
 
-        /* Предосмотр (A4) */
+        /* РЕЖИМ ПРОСМОТРА (VIEW MODE) */
+        body.is-view-mode { justify-content: center; background: #525659; }
+        body.is-view-mode .no-print { display: none !important; }
+        body.is-view-mode #cert-page { box-shadow: 0 0 50px rgba(0,0,0,0.5); }
+
+        /* Сертификат A4 */
         #cert-page {
             width: 210mm;
-            height: 295mm; /* Зафиксировано для исключения разрыва PDF */
+            height: 295mm;
             background: white;
             padding: 15mm;
             box-sizing: border-box;
@@ -48,26 +53,28 @@
         .sig-box { text-align: center; width: 220px; }
         .sig-img { max-height: 70px; display: none; margin-bottom: -5px; }
         .sig-line { border-top: 2px solid #000; padding-top: 5px; font-weight: bold; }
+
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white; padding: 0; display: block; }
+            #cert-page { box-shadow: none; margin: 0; border: none; width: 210mm; height: 297mm; }
+        }
     </style>
 </head>
-<body>
+<body id="mainBody">
 
 <div class="no-print">
     <h2>Certificate Setup</h2>
     
-    <label>Registration ID</label>
+    <label>ID</label>
     <input type="text" id="inID" placeholder="LION-001" oninput="sync()">
-
-    <label>Proprietor Name</label>
+    <label>Owner</label>
     <input type="text" id="inName" placeholder="Grill (avatiah)" oninput="sync()">
-
-    <label>Work Title</label>
+    <label>Title</label>
     <input type="text" id="inTitle" placeholder="Golden Lion" oninput="sync()">
-
-    <label>1. Work File (for Hash)</label>
+    <label>Work File (Hash)</label>
     <input type="file" id="inArt" onchange="calcHash(this)">
-
-    <label>2. Signature (PNG)</label>
+    <label>Signature (PNG)</label>
     <input type="file" id="inSig" onchange="loadSig(this)">
 
     <button class="btn-pdf" onclick="savePDF()">DOWNLOAD PDF</button>
@@ -103,8 +110,23 @@
 </div>
 
 <script>
+    let signatureBase64 = "";
     document.getElementById('outDate').innerText = new Date().toLocaleDateString('en-GB', {day:'numeric', month:'long', year:'numeric'});
-    let sigData = ""; // Хранилище для base64 подписи
+
+    // ПРОВЕРКА: Если в URL есть данные, включаем режим просмотра
+    const urlParams = new URLSearchParams(window.location.search);
+    if(urlParams.get('view') === 'true') {
+        document.body.classList.add('is-view-mode');
+        document.getElementById('outID').innerText = urlParams.get('id');
+        document.getElementById('outName').innerText = urlParams.get('name');
+        document.getElementById('outTitle').innerText = urlParams.get('title');
+        document.getElementById('outHash').innerText = urlParams.get('hash');
+        if(urlParams.get('sig')) {
+            const img = document.getElementById('outSig');
+            img.src = decodeURIComponent(urlParams.get('sig'));
+            img.style.display = 'inline-block';
+        }
+    }
 
     function sync() {
         document.getElementById('outID').innerText = document.getElementById('inID').value || 'PENDING';
@@ -125,9 +147,9 @@
         if(!input.files[0]) return;
         const reader = new FileReader();
         reader.onload = (e) => {
-            sigData = e.target.result;
+            signatureBase64 = e.target.result;
             const img = document.getElementById('outSig');
-            img.src = sigData;
+            img.src = signatureBase64;
             img.style.display = 'inline-block';
         };
         reader.readAsDataURL(input.files[0]);
@@ -135,15 +157,15 @@
 
     function getPreviewURL() {
         const id = encodeURIComponent(document.getElementById('outID').innerText);
-        const owner = encodeURIComponent(document.getElementById('outName').innerText);
+        const name = encodeURIComponent(document.getElementById('outName').innerText);
         const title = encodeURIComponent(document.getElementById('outTitle').innerText);
         const hash = encodeURIComponent(document.getElementById('outHash').innerText);
-        const signature = encodeURIComponent(sigData); // Добавляем подпись в URL
+        const sig = encodeURIComponent(signatureBase64);
 
-        const url = window.location.origin + window.location.pathname.replace('index.html', 'view.html') + 
-                    `?id=${id}&owner=${owner}&title=${title}&hash=${hash}&sig=${signature}`;
+        const fullURL = window.location.origin + window.location.pathname + 
+                        `?view=true&id=${id}&name=${name}&title=${title}&hash=${hash}&sig=${sig}`;
         
-        prompt("Copy URL for customer (Signature included):", url);
+        prompt("Copy this URL for the client:", fullURL);
     }
 
     function savePDF() {
@@ -152,10 +174,16 @@
             margin: 0,
             filename: 'Certificate.pdf',
             image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { scale: 2, logging: false, useCORS: true },
+            html2canvas: { scale: 2, useCORS: true },
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
         };
-        html2pdf().set(opt).from(element).save();
+        // Принудительно генерируем только одну страницу
+        html2pdf().set(opt).from(element).toPdf().get('pdf').then(function(pdf) {
+            const totalPages = pdf.internal.getNumberOfPages();
+            for (let i = totalPages; i > 1; i--) {
+                pdf.deletePage(i);
+            }
+        }).save();
     }
 </script>
 </body>
