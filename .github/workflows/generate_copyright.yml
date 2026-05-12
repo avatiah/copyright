@@ -1,13 +1,13 @@
-name: Generate Copyright PDF
+name: Full Copyright Certification
 on:
   workflow_dispatch:
     inputs:
       owner_name:
-        description: 'Copyright Owner'
+        description: 'Ваше Имя (Правообладатель)'
         required: true
         default: 'Grill (avatiah)'
-      asset_title:
-        description: 'Design Title'
+      image_filename:
+        description: 'Имя файла в папке designs (например: lion.jpg)'
         required: true
 
 jobs:
@@ -17,27 +17,39 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Install Tools
+      - name: Install dependencies
         run: pip install weasyprint
 
-      - name: Create PDF
+      - name: Calculate Hash and Generate PDF
         run: |
           python -c "
-          from weasyprint import HTML
+          import hashlib
           import datetime
-          try:
-              with open('template.html', 'r') as f: content = f.read()
-              content = content.replace('{{ OWNER_NAME }}', '${{ github.event.inputs.owner_name }}')
-              content = content.replace('{{ ASSET_TITLE }}', '${{ github.event.inputs.asset_title }}')
-              content = content.replace('{{ DATE }}', datetime.datetime.now().strftime('%B %d, %Y'))
-              HTML(string=content, base_url='.').write_pdf('output/certificate.pdf')
-          except Exception as e: print(f'Error: {e}')
+          from weasyprint import HTML
+          
+          img_path = 'designs/${{ github.event.inputs.image_filename }}'
+          
+          # 1. Расчет SHA-256
+          with open(img_path, 'rb') as f:
+              file_hash = hashlib.sha256(f.read()).hexdigest()
+          
+          # 2. Подготовка шаблона
+          with open('template.html', 'r') as f:
+              html = f.read()
+          
+          html = html.replace('{{ OWNER_NAME }}', '${{ github.event.inputs.owner_name }}')
+          html = html.replace('{{ ASSET_TITLE }}', '${{ github.event.inputs.image_filename }}')
+          html = html.replace('{{ HASH }}', file_hash)
+          html = html.replace('{{ DATE }}', datetime.datetime.now().strftime('%d.%m.%Y'))
+          
+          # 3. Создание PDF
+          HTML(string=html, base_url='.').write_pdf('output/certificate_${{ github.event.inputs.image_filename }}.pdf')
           "
 
-      - name: Upload
+      - name: Save to Repository
         run: |
           git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          git add output/certificate.pdf
-          git commit -m "Certificate for ${{ github.event.inputs.asset_title }}" || echo "No changes"
+          git config --local user.name "Copyright Bot"
+          git add output/
+          git commit -m "Certificate for ${{ github.event.inputs.image_filename }}"
           git push
