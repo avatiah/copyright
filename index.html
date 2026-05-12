@@ -2,98 +2,128 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Professional Copyright Generator</title>
+    <title>Official Design Certificate Generator</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #eef2f3; display: flex; padding: 30px; gap: 30px; justify-content: center; }
-        .sidebar { background: #2c3e50; color: white; padding: 25px; border-radius: 12px; width: 350px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
-        .preview-pane { background: white; padding: 0; width: 800px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border: 1px solid #d1d1d1; }
+        /* General Web Styles */
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; display: flex; padding: 20px; gap: 30px; justify-content: center; }
+        .sidebar { background: #2c3e50; color: white; padding: 20px; border-radius: 8px; width: 320px; height: fit-content; position: sticky; top: 20px; }
+        .preview-area { background: #666; padding: 40px; display: flex; justify-content: center; }
         
-        /* Form Styling */
-        h2 { color: #ecf0f1; font-size: 18px; margin-bottom: 20px; border-bottom: 1px solid #34495e; padding-bottom: 10px; }
-        label { display: block; margin-top: 15px; font-size: 12px; color: #bdc3c7; text-transform: uppercase; }
-        input { width: 100%; padding: 12px; margin: 8px 0; border: none; border-radius: 4px; background: #34495e; color: white; box-sizing: border-box; }
-        input::placeholder { color: #7f8c8d; }
-        button { width: 100%; padding: 15px; margin-top: 25px; background: #27ae60; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 16px; transition: 0.3s; }
+        /* Form Controls */
+        h2 { font-size: 1.2em; border-bottom: 1px solid #3e4f5f; padding-bottom: 10px; }
+        label { display: block; margin-top: 15px; font-size: 11px; text-transform: uppercase; color: #95a5a6; }
+        input { width: 100%; padding: 10px; margin: 5px 0 15px; border-radius: 4px; border: none; background: #34495e; color: white; box-sizing: border-box; }
+        button { width: 100%; padding: 15px; background: #27ae60; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; margin-top: 20px; }
         button:hover { background: #2ecc71; }
 
-        /* Certificate Design (Formal) */
-        #cert-document { padding: 60px; height: 1000px; color: #1a1a1a; font-family: 'Times New Roman', Times, serif; position: relative; }
-        .inner-border { border: 2px solid #1a1a1a; padding: 40px; height: 880px; position: relative; }
-        .outer-border { border: 6px double #1a1a1a; height: 960px; padding: 5px; }
-        
-        .cert-header { text-align: center; margin-bottom: 50px; }
-        .cert-header h1 { font-size: 36pt; margin: 0; letter-spacing: 2px; }
-        .cert-header p { font-size: 12pt; text-transform: uppercase; letter-spacing: 4px; margin-top: 5px; }
+        /* PDF & Print Styles (CRITICAL FOR CLIPPING) */
+        @media print {
+            body { background: none; padding: 0; }
+            .sidebar { display: none; }
+        }
 
-        .statement { font-size: 14pt; margin-top: 60px; line-height: 1.6; }
-        .data-field { font-weight: bold; font-style: italic; font-size: 18pt; border-bottom: 1px solid #000; display: inline-block; min-width: 300px; margin: 10px 0; }
-        
-        .hash-section { margin-top: 50px; background: #f9f9f9; padding: 15px; border: 1px solid #eee; }
-        .hash-label { font-size: 10pt; font-weight: bold; text-transform: uppercase; color: #555; margin-bottom: 5px; }
-        .hash-value { font-family: 'Courier New', Courier, monospace; word-break: break-all; font-size: 11pt; color: #000; }
+        @page {
+            size: A4;
+            margin: 0; /* Margins are handled by internal padding to avoid clipping */
+        }
 
-        .footer-sig { position: absolute; bottom: 80px; width: 80%; display: flex; justify-content: space-between; align-items: flex-end; }
-        .sig-block { text-align: center; width: 220px; }
-        .sig-image { max-width: 180px; max-height: 80px; margin-bottom: -10px; display: none; }
-        .sig-line { border-top: 1px solid #000; padding-top: 5px; font-size: 11pt; font-weight: bold; }
+        #cert-pdf {
+            width: 210mm;
+            min-height: 297mm;
+            padding: 15mm;
+            background: white;
+            box-sizing: border-box;
+            color: #1a1a1a;
+            font-family: 'Times New Roman', serif;
+        }
+
+        .border-main {
+            border: 2px solid #1a1a1a;
+            padding: 10mm;
+            height: 260mm;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header { text-align: center; border-bottom: 3px solid #1a1a1a; padding-bottom: 15px; }
+        .header h1 { font-size: 32pt; margin: 0; text-transform: uppercase; letter-spacing: 2px; }
+        .header p { font-size: 10pt; letter-spacing: 5px; margin: 5px 0 0; }
+
+        .content { margin-top: 40px; font-size: 14pt; line-height: 1.6; }
+        .field { font-weight: bold; font-style: italic; border-bottom: 1px solid #333; display: inline-block; min-width: 200px; padding: 0 10px; }
+
+        .hash-box { margin-top: 40px; padding: 15px; background: #f2f2f2; border-left: 5px solid #1a1a1a; }
+        .hash-title { font-size: 10pt; font-weight: bold; text-transform: uppercase; color: #444; }
+        .hash-value { font-family: 'Courier New', monospace; font-size: 10pt; word-break: break-all; margin-top: 5px; color: #000; }
+
+        .legal-disclaimer { margin-top: auto; font-size: 9pt; color: #555; font-style: italic; text-align: justify; border-top: 1px solid #ddd; padding-top: 15px; }
+
+        .footer { margin-top: 40px; display: flex; justify-content: space-between; align-items: flex-end; }
+        .signature-area { text-align: center; width: 250px; }
+        .sig-img { max-height: 70px; margin-bottom: -10px; display: none; }
+        .sig-line { border-top: 2px solid #1a1a1a; font-weight: bold; font-size: 11pt; padding-top: 5px; }
     </style>
 </head>
 <body>
 
 <div class="sidebar">
-    <h2>Configuration</h2>
+    <h2>Certificate Data</h2>
     
-    <label>Copyright Owner</label>
-    <input type="text" id="inName" placeholder="e.g. Grill (avatiah)" oninput="sync()">
+    <label>Certificate ID</label>
+    <input type="text" id="inID" placeholder="e.g. ART-2026-001" oninput="update()">
+
+    <label>Author / Owner</label>
+    <input type="text" id="inOwner" placeholder="Grill (avatiah)" oninput="update()">
     
-    <label>Asset Title</label>
-    <input type="text" id="inTitle" placeholder="e.g. Golden Lion Design" oninput="sync()">
+    <label>Product Name</label>
+    <input type="text" id="inTitle" placeholder="Lion of Judah" oninput="update()">
     
-    <label>Source Image (for Hashing)</label>
-    <input type="file" id="inArt" onchange="getHash(this)">
+    <label>Design File (Calculate SHA-256)</label>
+    <input type="file" id="inArt" onchange="hashFile(this)">
     
-    <label>Legal Signature (PNG)</label>
-    <input type="file" id="inSig" onchange="getSig(this)">
+    <label>Signature (PNG)</label>
+    <input type="file" id="inSig" onchange="loadSig(this)">
     
-    <button onclick="exportPDF()">Download Official PDF</button>
+    <button onclick="download()">Generate Official PDF</button>
 </div>
 
-<div class="preview-pane">
-    <div id="cert-document">
-        <div class="outer-border">
-            <div class="inner-border">
-                <div class="cert-header">
-                    <h1>CERTIFICATE</h1>
-                    <p>OF INTELLECTUAL PROPERTY</p>
+<div class="preview-area">
+    <div id="cert-pdf">
+        <div class="border-main">
+            <div class="header">
+                <h1>Certificate of Authenticity</h1>
+                <p>Official Intellectual Property Document</p>
+            </div>
+
+            <div class="content">
+                <p>Certificate Reference ID: <span id="outID" class="field">PENDING</span></p>
+                <p>This document formally certifies that the creator and sole legal proprietor:</p>
+                <div id="outOwner" class="field" style="font-size: 18pt;">AUTHOR NAME</div>
+                
+                <p>Holds all exclusive copyrights and distribution rights for the original design titled:</p>
+                <div id="outTitle" class="field" style="font-size: 18pt;">DESIGN ASSET TITLE</div>
+                
+                <p style="margin-top: 30px;">Registration Date: <strong id="outDate"></strong></p>
+            </div>
+
+            <div class="hash-box">
+                <div class="hash-title">Digital Signature of Integrity (SHA-256)</div>
+                <div id="outHash" class="hash-value">Please select an image to generate fingerprint...</div>
+            </div>
+
+            <div class="legal-disclaimer">
+                Any unauthorized reproduction, modification, or distribution of this design without the express written consent of the owner listed above is strictly prohibited by international copyright laws. This certificate, combined with the SHA-256 hash, serves as definitive proof of the original state of the work at the time of issuance.
+            </div>
+
+            <div class="footer">
+                <div class="signature-area">
+                    <img id="outSig" class="sig-img">
+                    <div class="sig-line">Authorized Signature</div>
                 </div>
-
-                <div class="statement">
-                    This document serves as a formal declaration that the following individual:<br>
-                    <div id="outName" class="data-field">NAME OF OWNER</div><br>
-                    is the recognized author and rightful owner of the intellectual property titled:<br>
-                    <div id="outTitle" class="data-field">TITLE OF ASSET</div>
-                </div>
-
-                <div class="hash-section">
-                    <div class="hash-label">Digital Proof of Integrity (SHA-256 Fingerprint)</div>
-                    <div id="outHash" class="hash-value">Awaiting file upload for verification...</div>
-                </div>
-
-                <p style="margin-top: 40px; font-size: 11pt; font-style: italic;">
-                    The digital fingerprint provided above was generated using the SHA-256 cryptographic hash algorithm. 
-                    This creates a unique, immutable identifier for the asset, ensuring its integrity and original state.
-                </p>
-
-                <div class="footer-sig">
-                    <div class="sig-block">
-                        <img id="outSig" class="sig-image">
-                        <div class="sig-line">Authorized Signature</div>
-                    </div>
-                    <div style="text-align: right;">
-                        <span style="font-size: 11pt;">Date of Issuance:</span><br>
-                        <strong id="outDate" style="font-size: 14pt;"></strong>
-                    </div>
+                <div style="text-align: right;">
+                    <p style="font-size: 10pt; color: #555;">Location: Ashdod, Israel</p>
                 </div>
             </div>
         </div>
@@ -101,14 +131,15 @@
 </div>
 
 <script>
-    document.getElementById('outDate').innerText = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    document.getElementById('outDate').innerText = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
 
-    function sync() {
-        document.getElementById('outName').innerText = document.getElementById('inName').value || 'NAME OF OWNER';
-        document.getElementById('outTitle').innerText = document.getElementById('inTitle').value || 'TITLE OF ASSET';
+    function update() {
+        document.getElementById('outID').innerText = document.getElementById('inID').value || 'PENDING';
+        document.getElementById('outOwner').innerText = document.getElementById('inOwner').value || 'AUTHOR NAME';
+        document.getElementById('outTitle').innerText = document.getElementById('inTitle').value || 'DESIGN ASSET TITLE';
     }
 
-    async function getHash(input) {
+    async function hashFile(input) {
         if (!input.files[0]) return;
         const buffer = await input.files[0].arrayBuffer();
         const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
@@ -117,24 +148,24 @@
         document.getElementById('outHash').innerText = hashHex;
     }
 
-    function getSig(input) {
+    function loadSig(input) {
         if (!input.files[0]) return;
         const reader = new FileReader();
         reader.onload = (e) => {
             const img = document.getElementById('outSig');
             img.src = e.target.result;
-            img.style.display = 'inline-block';
+            img.style.display = 'block';
         };
         reader.readAsDataURL(input.files[0]);
     }
 
-    function exportPDF() {
-        const element = document.getElementById('cert-document');
+    function download() {
+        const element = document.getElementById('cert-pdf');
         const opt = {
             margin: 0,
-            filename: 'Copyright_Certificate.pdf',
+            filename: 'Official_Copyright_Certificate.pdf',
             image: { type: 'jpeg', quality: 1 },
-            html2canvas: { scale: 3, useCORS: true },
+            html2canvas: { scale: 3, useCORS: true, logging: false },
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
         };
         html2pdf().from(element).set(opt).save();
