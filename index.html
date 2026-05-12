@@ -1,158 +1,128 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Copyright Certificate Generator</title>
+    <title>Copyright Certificate Pro</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
-        :root { --primary: #2c3e50; --accent: #27ae60; --bg: #f4f7f6; }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); margin: 0; display: flex; height: 100vh; overflow: hidden; }
-        
-        /* Панель управления */
-        .sidebar { 
-            width: 360px; background: var(--primary); color: white; padding: 25px; 
-            box-shadow: 4px 0 15px rgba(0,0,0,0.1); z-index: 10; overflow-y: auto;
+        :root { --panel-bg: #2c3e50; --accent: #27ae60; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; display: flex; background: #525659; height: 100vh; }
+
+        /* Левая панель со всеми опциями */
+        .admin-panel { 
+            width: 380px; background: var(--panel-bg); color: white; padding: 25px; 
+            display: flex; flex-direction: column; gap: 15px; box-shadow: 5px 0 15px rgba(0,0,0,0.3);
+            z-index: 100; overflow-y: auto;
         }
-        .sidebar h2 { font-size: 1.2rem; margin-bottom: 20px; border-bottom: 1px solid #3e5871; padding-bottom: 10px; }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; font-size: 0.75rem; text-transform: uppercase; color: #95a5a6; margin-bottom: 5px; }
-        input { width: 100%; padding: 10px; border-radius: 6px; border: none; background: #34495e; color: white; box-sizing: border-box; }
+        .admin-panel h2 { margin: 0 0 10px 0; font-size: 1.2rem; border-bottom: 1px solid #455d7a; padding-bottom: 10px; }
         
-        .actions { margin-top: 25px; display: flex; flex-direction: column; gap: 10px; }
-        button { 
-            padding: 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; 
-            transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px;
-        }
-        .btn-pdf { background: var(--accent); color: white; }
-        .btn-pdf:hover { background: #219150; }
+        .field-group { display: flex; flex-direction: column; gap: 5px; }
+        label { font-size: 0.7rem; text-transform: uppercase; color: #bdc3c7; }
+        input { padding: 10px; border-radius: 4px; border: none; background: #34495e; color: white; }
+        
+        button { padding: 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        .btn-pdf { background: var(--accent); color: white; margin-top: 10px; }
+        .btn-pdf:hover { background: #2ecc71; }
         .btn-link { background: #2980b9; color: white; }
-        .btn-link:hover { background: #2471a3; }
 
-        /* Превью сертификата */
-        .preview-area { flex: 1; display: flex; justify-content: center; align-items: flex-start; padding: 40px; overflow-y: auto; background: #525659; }
+        /* Область предпросмотра */
+        .preview-viewport { flex: 1; display: flex; justify-content: center; align-items: flex-start; padding: 40px; overflow-y: auto; }
+
+        /* Стиль самого сертификата (A4) */
+        #certificate-render {
+            width: 210mm; height: 297mm; background: white; padding: 20mm;
+            box-sizing: border-box; box-shadow: 0 0 30px rgba(0,0,0,0.5);
+            font-family: 'Times New Roman', Times, serif; position: relative;
+            display: flex; flex-direction: column;
+        }
+
+        .main-border { border: 8px double #1a1a1a; height: 100%; padding: 10mm; display: flex; flex-direction: column; box-sizing: border-box; }
+        .header { text-align: center; border-bottom: 2px solid #1a1a1a; padding-bottom: 20px; margin-bottom: 30px; }
+        .header h1 { font-size: 40pt; margin: 0; text-transform: uppercase; letter-spacing: 3px; }
         
-        #certificate {
-            width: 210mm;
-            min-height: 297mm;
-            background: white;
-            padding: 20mm;
-            box-sizing: border-box;
-            position: relative;
-            box-shadow: 0 0 30px rgba(0,0,0,0.5);
-            display: flex;
-            flex-direction: column;
-        }
+        .cert-content { flex-grow: 1; font-size: 17pt; line-height: 1.8; color: #1a1a1a; }
+        .data-line { font-weight: bold; border-bottom: 1px solid #000; display: inline-block; min-width: 200px; }
 
-        .outer-border { border: 10px double #1a1a1a; height: 100%; padding: 10mm; flex: 1; display: flex; flex-direction: column; }
-        .header { text-align: center; border-bottom: 2px solid #1a1a1a; padding-bottom: 20px; margin-bottom: 40px; }
-        .header h1 { font-size: 42pt; margin: 0; letter-spacing: 4px; font-family: 'Times New Roman', serif; }
-        .header p { font-size: 14pt; letter-spacing: 8px; margin: 5px 0 0; color: #555; }
+        .hash-section { background: #f4f4f4; border-left: 5px solid #1a1a1a; padding: 15px; margin-top: 30px; }
+        .hash-title { font-size: 10pt; font-weight: bold; margin-bottom: 5px; }
+        .hash-value { font-family: 'Courier New', Courier, monospace; font-size: 11pt; word-break: break-all; }
 
-        .content { flex: 1; font-size: 16pt; line-height: 1.8; font-family: 'Times New Roman', serif; }
-        .row { margin-bottom: 25px; }
-        .label { font-size: 12pt; color: #7f8c8d; text-transform: uppercase; display: block; }
-        .val { font-weight: bold; border-bottom: 1px solid #ccc; display: block; padding: 5px 0; color: #1a1a1a; }
+        .footer { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 40px; }
+        .signature-area { text-align: center; width: 220px; }
+        #sig-output { max-height: 80px; max-width: 200px; display: none; margin-bottom: -10px; }
+        .sig-line { border-top: 2px solid #000; padding-top: 5px; font-weight: bold; }
 
-        .hash-container { background: #f8f9fa; border: 1px dashed #bdc3c7; padding: 15px; margin-top: 30px; }
-        .hash-text { font-family: 'Courier New', monospace; font-size: 10pt; word-break: break-all; color: #e74c3c; }
-
-        .footer { margin-top: 50px; display: flex; justify-content: space-between; align-items: flex-end; }
-        .sig-block { text-align: center; width: 250px; }
-        .sig-image { max-height: 80px; margin-bottom: -10px; display: none; }
-        .sig-line { border-top: 2px solid #1a1a1a; padding-top: 8px; font-weight: bold; font-size: 12pt; }
-
-        /* Режим "Ссылка для клиента" */
-        body.client-mode .sidebar { display: none; }
-        body.client-mode .preview-area { padding: 0; background: white; }
-        body.client-mode #certificate { box-shadow: none; }
-
-        @media print {
-            .sidebar { display: none; }
-            body { background: white; }
-            .preview-area { padding: 0; overflow: visible; }
-            #certificate { box-shadow: none; margin: 0; width: 210mm; height: 297mm; }
-        }
+        /* Режим клиента (скрываем панель через URL) */
+        body.client-view .admin-panel { display: none; }
+        body.client-view .preview-viewport { padding: 0; background: white; }
     </style>
 </head>
 <body>
 
-<div class="sidebar">
-    <h2>Certificate Tool</h2>
-    <div class="form-group">
-        <label>Certificate ID</label>
-        <input type="text" id="certId" placeholder="e.g. 2026-NFT-001" oninput="update()">
-    </div>
-    <div class="form-group">
-        <label>Owner Name</label>
-        <input type="text" id="owner" placeholder="Full Name" oninput="update()">
-    </div>
-    <div class="form-group">
-        <label>Creative Work Title</label>
-        <input type="text" id="workTitle" placeholder="Artwork Name" oninput="update()">
-    </div>
-    <div class="form-group">
-        <label>File for Hashing</label>
-        <input type="file" id="fileInput" onchange="generateHash(this)">
-    </div>
-    <div class="form-group">
-        <label>Your Signature (PNG/JPG)</label>
-        <input type="file" id="sigInput" onchange="loadSignature(this)">
+<div class="admin-panel">
+    <h2>Настройки сертификата</h2>
+    
+    <div class="field-group">
+        <label>ID Сертификата</label>
+        <input type="text" id="inID" placeholder="2026-NFT-01" oninput="sync()">
     </div>
 
-    <div class="actions">
-        <button class="btn-pdf" onclick="downloadPDF()">
-            <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M12 16l-5-5h3V4h4v7h3l-5 5zm9-9h-6v2h4v10H5V9h4V7H3v14h18V7z"/></svg>
-            Save PDF (Full Page)
-        </button>
-        <button class="btn-link" onclick="copyClientLink()">
-            <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/></svg>
-            Short Link for Client
-        </button>
+    <div class="field-group">
+        <label>Владелец (Owner)</label>
+        <input type="text" id="inName" placeholder="Grill (avatiah)" oninput="sync()">
     </div>
-    <p style="font-size: 0.7rem; margin-top: 20px; color: #7f8c8d;">* Short link will not contain the signature for security/size reasons. PDF will be complete.</p>
+
+    <div class="field-group">
+        <label>Название работы</label>
+        <input type="text" id="inTitle" placeholder="Golden Lion" oninput="sync()">
+    </div>
+
+    <div class="field-group">
+        <label>Загрузить файл (для Хеша)</label>
+        <input type="file" id="fileIn" onchange="makeHash(this)">
+    </div>
+
+    <div class="field-group">
+        <label>Ваша подпись (PNG)</label>
+        <input type="file" id="sigIn" onchange="makeSig(this)">
+    </div>
+
+    <button class="btn-pdf" onclick="generatePDF()">СКАЧАТЬ ПОЛНЫЙ PDF</button>
+    <button class="btn-link" onclick="copySafeLink()">КОПИРОВАТЬ ССЫЛКУ</button>
 </div>
 
-<div class="preview-area">
-    <div id="certificate">
-        <div class="outer-border">
+<div class="preview-viewport">
+    <div id="certificate-render">
+        <div class="main-border">
             <div class="header">
                 <h1>CERTIFICATE</h1>
-                <p>OF AUTHENTICITY</p>
+                <p style="letter-spacing: 10px; font-size: 14pt;">OF AUTHENTICITY</p>
             </div>
 
-            <div class="content">
-                <div class="row">
-                    <span class="label">Registration Reference</span>
-                    <span class="val" id="outId">PENDING</span>
-                </div>
-                <div class="row">
-                    <span class="label">Creative Work Title</span>
-                    <span class="val" id="outWork" style="font-size: 22pt;">[ASSET NAME]</span>
-                </div>
-                <div class="row">
-                    <span class="label">Legal Proprietor</span>
-                    <span class="val" id="outOwner">[NAME]</span>
-                </div>
-                <div class="row">
-                    <span class="label">Date of Issuance</span>
-                    <span class="val" id="outDate"></span>
-                </div>
+            <div class="cert-content">
+                <p>Registration No: <span id="outID" class="data-line">PENDING</span></p>
+                <p>This document confirms the ownership of:</p>
+                <div id="outTitle" class="data-line" style="font-size: 22pt; font-style: italic;">[WORK TITLE]</div>
+                
+                <p>To the legal proprietor:</p>
+                <div id="outName" class="data-line" style="font-size: 22pt;">[PROPRIETOR NAME]</div>
+                
+                <p style="margin-top: 30px;">Date: <span id="currDate" style="font-weight: bold;"></span></p>
 
-                <div class="hash-container">
-                    <span class="label" style="color: #2c3e50; font-weight: bold;">Digital Fingerprint (SHA-256)</span>
-                    <div class="hash-text" id="outHash">No file hashed yet...</div>
+                <div class="hash-section">
+                    <div class="hash-title">DIGITAL ASSET FINGERPRINT (SHA-256)</div>
+                    <div id="outHash" class="hash-value">Please select a file...</div>
                 </div>
             </div>
 
             <div class="footer">
-                <div class="sig-block">
-                    <img id="sigImg" class="sig-image">
+                <div class="signature-area">
+                    <img id="sig-output">
                     <div class="sig-line">Authorized Signature</div>
                 </div>
-                <div style="text-align: right; color: #7f8c8d; font-size: 10pt;">
-                    Generated by Grill IP System<br>
-                    Location: Ashdod, Israel
+                <div style="text-align: right; font-size: 11pt;">
+                    Location: <strong>Israel</strong><br>
+                    Verified by Grill IP Systems
                 </div>
             </div>
         </div>
@@ -160,27 +130,27 @@
 </div>
 
 <script>
-    const outDate = document.getElementById('outDate');
-    outDate.innerText = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+    let rawSig = "";
+    document.getElementById('currDate').innerText = new Date().toLocaleDateString('en-GB', {day:'numeric', month:'long', year:'numeric'});
 
-    // Проверка режима клиента
+    // Логика отображения при открытии ссылки клиентом
     const urlParams = new URLSearchParams(window.location.search);
-    if(urlParams.get('view')) {
-        document.body.classList.add('client-mode');
-        document.getElementById('outId').innerText = urlParams.get('id') || 'N/A';
-        document.getElementById('outOwner').innerText = urlParams.get('owner') || 'N/A';
-        document.getElementById('outWork').innerText = urlParams.get('work') || 'N/A';
-        document.getElementById('outHash').innerText = urlParams.get('hash') || 'N/A';
+    if (urlParams.get('view')) {
+        document.body.classList.add('client-view');
+        document.getElementById('outID').innerText = urlParams.get('id');
+        document.getElementById('outName').innerText = urlParams.get('name');
+        document.getElementById('outTitle').innerText = urlParams.get('title');
+        document.getElementById('outHash').innerText = urlParams.get('hash');
     }
 
-    function update() {
-        document.getElementById('outId').innerText = document.getElementById('certId').value || 'PENDING';
-        document.getElementById('outOwner').innerText = document.getElementById('owner').value || '[NAME]';
-        document.getElementById('outWork').innerText = document.getElementById('workTitle').value || '[ASSET NAME]';
+    function sync() {
+        document.getElementById('outID').innerText = document.getElementById('inID').value || 'PENDING';
+        document.getElementById('outName').innerText = document.getElementById('inName').value || '[PROPRIETOR NAME]';
+        document.getElementById('outTitle').innerText = document.getElementById('inTitle').value || '[WORK TITLE]';
     }
 
-    async function generateHash(input) {
-        if (!input.files[0]) return;
+    async function makeHash(input) {
+        if(!input.files[0]) return;
         const buffer = await input.files[0].arrayBuffer();
         const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
         const hashArray = Array.from(new Uint8Array(hashBuffer));
@@ -188,43 +158,43 @@
         document.getElementById('outHash').innerText = hashHex;
     }
 
-    function loadSignature(input) {
-        if (!input.files[0]) return;
+    function makeSig(input) {
+        if(!input.files[0]) return;
         const reader = new FileReader();
         reader.onload = (e) => {
-            const img = document.getElementById('sigImg');
-            img.src = e.target.result;
-            img.style.display = 'block';
+            rawSig = e.target.result;
+            const img = document.getElementById('sig-output');
+            img.src = rawSig;
+            img.style.display = 'inline-block';
         };
         reader.readAsDataURL(input.files[0]);
     }
 
-    function downloadPDF() {
-        const element = document.getElementById('certificate');
+    function generatePDF() {
+        const element = document.getElementById('certificate-render');
         const opt = {
             margin: 0,
-            filename: 'Certificate_' + (document.getElementById('certId').value || 'new') + '.pdf',
-            image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { scale: 2, useCORS: true, letterRendering: true },
+            filename: 'Certificate-' + (document.getElementById('inID').value || 'new') + '.pdf',
+            image: { type: 'jpeg', quality: 1 },
+            html2canvas: { scale: 3, useCORS: true, logging: false },
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
         };
-        // Исправляем обрезку: принудительно устанавливаем размер перед генерацией
+        // html2pdf автоматически подгонит элемент под формат страницы
         html2pdf().set(opt).from(element).save();
     }
 
-    function copyClientLink() {
-        const id = encodeURIComponent(document.getElementById('outId').innerText);
-        const owner = encodeURIComponent(document.getElementById('outOwner').innerText);
-        const work = encodeURIComponent(document.getElementById('outWork').innerText);
+    function copySafeLink() {
+        const id = encodeURIComponent(document.getElementById('outID').innerText);
+        const name = encodeURIComponent(document.getElementById('outName').innerText);
+        const title = encodeURIComponent(document.getElementById('outTitle').innerText);
         const hash = encodeURIComponent(document.getElementById('outHash').innerText);
         
-        // Создаем короткую ссылку без подписи (чтобы избежать URI Too Long)
-        const baseUrl = window.location.href.split('?')[0];
-        const clientUrl = `${baseUrl}?view=1&id=${id}&owner=${owner}&work=${work}&hash=${hash}`;
+        // Формируем чистую ссылку без тяжелых данных подписи
+        const cleanURL = window.location.origin + window.location.pathname + 
+                         `?view=true&id=${id}&name=${name}&title=${title}&hash=${hash}`;
         
-        navigator.clipboard.writeText(clientUrl).then(() => {
-            alert('Short Link copied to clipboard! (Note: Signature is for PDF only)');
-        });
+        navigator.clipboard.writeText(cleanURL);
+        alert("Короткая ссылка скопирована! (Для клиента)");
     }
 </script>
 </body>
