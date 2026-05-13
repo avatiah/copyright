@@ -520,14 +520,26 @@ async function registerHash() {
 
   await switchChain();
 
-  /* Payload: JSON в hex */
+  /* Payload: только хеш + метаданные в hex.
+     Отправляем на нулевой адрес (burn address) — стандартная практика
+     для on-chain timestamp. Polygon и Sepolia принимают data на него. */
   const payload = JSON.stringify({
     app: 'HashChain',
+    v: '2',
     hash: currentHash,
     title, author, regid,
     ts: Date.now()
   });
-  const hexData = '0x' + Array.from(new TextEncoder().encode(payload)).map(b => b.toString(16).padStart(2,'0')).join('');
+  const hexData = '0x' + Array.from(new TextEncoder().encode(payload))
+    .map(b => b.toString(16).padStart(2,'0')).join('');
+
+  /* Gas: 21000 (base) + 68 per non-zero byte of data */
+  const dataBytes = new TextEncoder().encode(payload);
+  const gasNeeded = 21000 + dataBytes.reduce((acc, b) => acc + (b === 0 ? 4 : 68), 0);
+  const gasHex = '0x' + Math.ceil(gasNeeded * 1.2).toString(16); /* +20% запас */
+
+  /* Нулевой адрес — публичный, неизменяемый, принимает любые данные */
+  const BURN = '0x0000000000000000000000000000000000000000';
 
   showStatus('reg-status', 'pending', '⏳ Ожидание подтверждения в MetaMask...');
   document.getElementById('btn-register').classList.add('loading');
@@ -538,8 +550,9 @@ async function registerHash() {
       method: 'eth_sendTransaction',
       params: [{
         from: walletAddr,
-        to: walletAddr,   /* отправка самому себе = минимальный gas */
+        to: BURN,
         value: '0x0',
+        gas: gasHex,
         data: hexData
       }]
     });
@@ -563,7 +576,15 @@ async function registerHash() {
     });
 
   } catch (e) {
-    showStatus('reg-status', 'error', '✗ Ошибка: ' + (e.message || JSON.stringify(e)));
+    const msg = e.message || JSON.stringify(e);
+    let friendly = msg;
+    if (msg.includes('rejected') || msg.includes('denied') || e.code === 4001)
+      friendly = 'Транзакция отменена пользователем.';
+    else if (msg.includes('insufficient funds') || msg.includes('insufficient fee'))
+      friendly = `Недостаточно ${NETWORKS[currentNet].symbol} для оплаты gas.\nПолучите тестовые монеты через faucet (ссылка выше).`;
+    else if (msg.includes('internal') || msg.includes('data'))
+      friendly = 'Сеть отклонила транзакцию с данными.\nПопробуйте переключиться на Sepolia Testnet.';
+    showStatus('reg-status', 'error', '✗ ' + friendly);
   }
 
   document.getElementById('btn-register').classList.remove('loading');
