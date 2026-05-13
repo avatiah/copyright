@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Blockchain Copyright Registry</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0a0f;
+  --surface: #0f0f17;
+  --surface2: #16161f;
+  --border: #1e1e2e;
+  --border2: #2a2a3e;
+  --text: #e0e0f0;
+  --muted: #6060a0;
+  --dim: #30304a;
+  --poly: #8247e5;
+  --poly-light: #a67ff0;
+  --poly-dim: #1a0f33;
+  --sep: #00bfff;
+  --sep-light: #66d9ff;
+  --sep-dim: #00254a;
+  --success: #00e5a0;
+  --success-dim: #003322;
+  --danger: #ff4466;
+  --danger-dim: #2a0011;
+  --warn: #ffaa00;
+  --warn-dim: #2a1f00;
+  --radius: 8px;
+  --mono: 'IBM Plex Mono', monospace;
+  --sans: 'IBM Plex Sans', sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--sans); background: var(--bg); color: var(--text); min-height: 100vh; line-height: 1.5; }
+
+/* GRID NOISE BG */
+body::before {
+  content: ''; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background-image: repeating-linear-gradient(0deg, transparent, transparent 39px, var(--border) 39px, var(--border) 40px),
+                    repeating-linear-gradient(90deg, transparent, transparent 39px, var(--border) 39px, var(--border) 40px);
+  opacity: 0.3;
+}
+
+.app { position: relative; z-index: 1; max-width: 780px; margin: 0 auto; padding: 40px 20px 80px; }
+
+/* HEADER */
+.header { margin-bottom: 40px; }
+.header-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+.logo { font-family: var(--mono); font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+.title { font-family: var(--mono); font-size: 26px; font-weight: 500; color: var(--text); }
+.title span { color: var(--poly-light); }
+
+/* NETWORK SWITCHER */
+.net-switcher { display: flex; gap: 6px; padding: 4px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; }
+.net-btn {
+  padding: 7px 16px; border: 1px solid transparent; border-radius: 7px;
+  font-family: var(--mono); font-size: 11px; letter-spacing: 1px; text-transform: uppercase;
+  cursor: pointer; transition: all 0.2s; background: transparent; color: var(--muted);
+}
+.net-btn.poly.active { background: var(--poly-dim); border-color: var(--poly); color: var(--poly-light); }
+.net-btn.sep.active  { background: var(--sep-dim);  border-color: var(--sep);  color: var(--sep-light); }
+.net-btn:not(.active):hover { color: var(--text); border-color: var(--border2); }
+
+.net-info {
+  margin-top: 14px; padding: 10px 14px; border-radius: var(--radius);
+  font-family: var(--mono); font-size: 11px; display: flex; align-items: center; gap: 10px;
+  border: 1px solid; transition: all 0.3s;
+}
+.net-info.poly { background: var(--poly-dim); border-color: var(--poly); color: var(--poly-light); }
+.net-info.sep  { background: var(--sep-dim);  border-color: var(--sep);  color: var(--sep-light);  }
+.net-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; animation: pulse 2s infinite; }
+.net-info.poly .net-dot { background: var(--poly-light); box-shadow: 0 0 6px var(--poly); }
+.net-info.sep  .net-dot { background: var(--sep-light);  box-shadow: 0 0 6px var(--sep);  }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+/* WALLET */
+.wallet-bar {
+  margin-top: 20px; padding: 12px 16px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); display: flex; align-items: center; justify-content: space-between; gap: 12px;
+}
+.wallet-addr { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+.wallet-addr.connected { color: var(--success); }
+.btn-connect {
+  padding: 7px 16px; background: transparent; border: 1px solid var(--border2);
+  border-radius: 6px; font-family: var(--mono); font-size: 11px; letter-spacing: 1px;
+  text-transform: uppercase; color: var(--text); cursor: pointer; transition: all 0.2s; white-space: nowrap;
+}
+.btn-connect:hover { border-color: var(--poly-light); color: var(--poly-light); }
+.btn-connect.connected { border-color: var(--success); color: var(--success); }
+
+/* SECTIONS */
+.section { margin-top: 28px; }
+.section-label {
+  font-family: var(--mono); font-size: 10px; letter-spacing: 3px; text-transform: uppercase;
+  color: var(--muted); margin-bottom: 12px; display: flex; align-items: center; gap: 10px;
+}
+.section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+/* TABS */
+.tabs { display: flex; gap: 2px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 3px; margin-bottom: 20px; }
+.tab { flex: 1; padding: 9px; text-align: center; font-family: var(--mono); font-size: 11px; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; border-radius: 6px; color: var(--muted); transition: all 0.2s; border: none; background: transparent; }
+.tab.active { background: var(--surface2); color: var(--text); border: 1px solid var(--border2); }
+
+/* CARD */
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
+
+/* FORM */
+.field { margin-bottom: 16px; }
+.field label { font-family: var(--mono); font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 7px; }
+.field input[type=text] {
+  width: 100%; padding: 10px 14px;
+  background: var(--bg); border: 1px solid var(--border2);
+  border-radius: var(--radius); color: var(--text);
+  font-family: var(--mono); font-size: 13px; outline: none; transition: border-color 0.2s;
+}
+.field input:focus { border-color: var(--poly-light); }
+.field input.sep-mode:focus { border-color: var(--sep-light); }
+
+.file-drop {
+  border: 1px dashed var(--border2); border-radius: var(--radius);
+  padding: 28px 20px; text-align: center; cursor: pointer; transition: all 0.2s;
+  position: relative;
+}
+.file-drop:hover, .file-drop.drag { border-color: var(--poly-light); background: var(--poly-dim); }
+.file-drop.sep-mode:hover, .file-drop.sep-mode.drag { border-color: var(--sep-light); background: var(--sep-dim); }
+.file-drop input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.drop-icon { font-size: 28px; margin-bottom: 8px; }
+.drop-text { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+.drop-text strong { color: var(--text); }
+
+.hash-display {
+  margin-top: 12px; padding: 12px 14px;
+  background: var(--bg); border: 1px solid var(--border2);
+  border-radius: var(--radius); font-family: var(--mono); font-size: 11px;
+  word-break: break-all; color: var(--success); line-height: 1.6; display: none;
+}
+.hash-display.show { display: block; }
+
+/* BUTTON */
+.btn-main {
+  width: 100%; padding: 14px; margin-top: 16px;
+  border: none; border-radius: var(--radius); cursor: pointer;
+  font-family: var(--mono); font-size: 12px; letter-spacing: 2px; text-transform: uppercase;
+  font-weight: 500; transition: all 0.2s; position: relative; overflow: hidden;
+}
+.btn-main.poly { background: var(--poly); color: #fff; }
+.btn-main.poly:hover { background: var(--poly-light); }
+.btn-main.sep  { background: var(--sep);  color: #000; }
+.btn-main.sep:hover  { background: var(--sep-light); }
+.btn-main:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-main.loading::after {
+  content: ''; position: absolute; bottom: 0; left: 0; height: 2px;
+  background: rgba(255,255,255,0.5); animation: progress 1.5s infinite;
+}
+@keyframes progress { 0%{width:0;left:0} 50%{width:60%;left:20%} 100%{width:0;left:100%} }
+
+.btn-small {
+  padding: 6px 14px; border-radius: 5px; font-family: var(--mono); font-size: 10px;
+  letter-spacing: 1px; text-transform: uppercase; cursor: pointer; border: 1px solid var(--border2);
+  background: transparent; color: var(--muted); transition: all 0.2s; white-space: nowrap;
+}
+.btn-small:hover { color: var(--text); border-color: var(--text); }
+.btn-small.danger { border-color: var(--danger); color: var(--danger); }
+
+/* FAUCET LINK */
+.faucet-box {
+  padding: 10px 14px; border-radius: var(--radius);
+  font-family: var(--mono); font-size: 11px; display: flex; align-items: center; gap: 10px;
+  justify-content: space-between; margin-top: 10px;
+}
+.faucet-box.poly { background: var(--poly-dim); border: 1px solid var(--poly); color: var(--poly-light); }
+.faucet-box.sep  { background: var(--sep-dim);  border: 1px solid var(--sep);  color: var(--sep-light);  }
+.faucet-box a { color: inherit; text-decoration: underline; }
+
+/* STATUS */
+.status-box {
+  padding: 14px 16px; border-radius: var(--radius); margin-top: 16px;
+  font-family: var(--mono); font-size: 12px; line-height: 1.7; display: none;
+  border: 1px solid;
+}
+.status-box.show { display: block; }
+.status-box.pending { background: var(--warn-dim); border-color: var(--warn); color: var(--warn); }
+.status-box.success { background: var(--success-dim); border-color: var(--success); color: var(--success); }
+.status-box.error   { background: var(--danger-dim); border-color: var(--danger); color: var(--danger); }
+.status-box a { color: inherit; }
+.status-copy { float: right; }
+
+/* HISTORY */
+.history-empty { font-family: var(--mono); font-size: 12px; color: var(--muted); text-align: center; padding: 30px; }
+.tx-item {
+  padding: 14px 16px; border: 1px solid var(--border);
+  border-radius: var(--radius); margin-bottom: 10px; background: var(--surface);
+  transition: border-color 0.2s;
+}
+.tx-item:hover { border-color: var(--border2); }
+.tx-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 8px; flex-wrap: wrap; }
+.tx-name { font-size: 14px; font-weight: 500; }
+.tx-date { font-family: var(--mono); font-size: 10px; color: var(--muted); white-space: nowrap; }
+.tx-hash { font-family: var(--mono); font-size: 10px; color: var(--muted); word-break: break-all; margin-bottom: 6px; }
+.tx-hash span { color: var(--text); }
+.tx-badges { display: flex; gap: 6px; flex-wrap: wrap; }
+.badge {
+  padding: 2px 8px; border-radius: 4px; font-family: var(--mono); font-size: 10px; letter-spacing: 1px;
+}
+.badge.poly { background: var(--poly-dim); color: var(--poly-light); border: 1px solid var(--poly); }
+.badge.sep  { background: var(--sep-dim);  color: var(--sep-light);  border: 1px solid var(--sep); }
+.badge.confirmed { background: var(--success-dim); color: var(--success); border: 1px solid var(--success); }
+.badge.pending   { background: var(--warn-dim);    color: var(--warn);    border: 1px solid var(--warn); }
+.tx-actions { display: flex; gap: 6px; margin-top: 10px; }
+
+/* VERIFY */
+.verify-result { margin-top: 16px; display: none; }
+.verify-result.show { display: block; }
+.verify-match {
+  padding: 14px 16px; border-radius: var(--radius); font-family: var(--mono); font-size: 12px;
+  line-height: 1.8; border: 1px solid;
+}
+.verify-match.ok    { background: var(--success-dim); border-color: var(--success); color: var(--success); }
+.verify-match.fail  { background: var(--danger-dim);  border-color: var(--danger);  color: var(--danger);  }
+
+/* EXPORT NOTE */
+.export-note {
+  margin-top: 14px; padding: 10px 14px; background: var(--surface2);
+  border: 1px solid var(--border); border-radius: var(--radius);
+  font-family: var(--mono); font-size: 11px; color: var(--muted);
+}
+.export-note strong { color: var(--text); }
+.export-note code { color: var(--poly-light); background: var(--poly-dim); padding: 1px 5px; border-radius: 3px; }
+
+/* RESPONSIVE */
+@media(max-width:600px) {
+  .title { font-size: 20px; }
+  .header-top { flex-direction: column; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-top">
+      <div>
+        <div class="logo">// Blockchain Copyright Registry</div>
+        <div class="title">Hash<span>Chain</span> ™</div>
+      </div>
+      <div class="net-switcher">
+        <button class="net-btn poly active" onclick="switchNet('polygon')">Polygon</button>
+        <button class="net-btn sep" onclick="switchNet('sepolia')">Sepolia</button>
+      </div>
+    </div>
+
+    <div class="net-info poly" id="net-info">
+      <div class="net-dot"></div>
+      <span id="net-info-text">Polygon Mainnet — ~$0.001 за транзакцию / требуется MATIC</span>
+    </div>
+
+    <div class="wallet-bar">
+      <div class="wallet-addr" id="wallet-display">MetaMask не подключён</div>
+      <button class="btn-connect" id="btn-connect" onclick="connectWallet()">Подключить MetaMask</button>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('register')">Регистрация</button>
+    <button class="tab" onclick="showTab('verify')">Верификация</button>
+    <button class="tab" onclick="showTab('history')">История</button>
+  </div>
+
+  <!-- ═══ TAB: REGISTER ═══ -->
+  <div id="tab-register">
+
+    <div class="section-label">Информация о работе</div>
+    <div class="card">
+      <div class="field">
+        <label>Название работы *</label>
+        <input type="text" id="r-title" placeholder="Golden Lion" class="r-input">
+      </div>
+      <div class="field">
+        <label>Автор / Владелец *</label>
+        <input type="text" id="r-author" placeholder="Grill (avatiah)" class="r-input">
+      </div>
+      <div class="field">
+        <label>Reg. ID (необязательно)</label>
+        <input type="text" id="r-regid" placeholder="2026-COA-001" class="r-input">
+      </div>
+    </div>
+
+    <div class="section-label" style="margin-top:20px;">Файл для регистрации</div>
+    <div class="card">
+      <div class="file-drop" id="file-drop" ondragover="onDrag(event,true)" ondragleave="onDrag(event,false)" ondrop="onDrop(event)">
+        <input type="file" onchange="loadFile(this.files[0])">
+        <div class="drop-icon">◈</div>
+        <div class="drop-text"><strong>Перетащите файл</strong> или нажмите для выбора</div>
+        <div class="drop-text" style="margin-top:4px; font-size:10px;">Любой тип файла — изображение, видео, документ</div>
+      </div>
+      <div class="hash-display" id="hash-out"></div>
+    </div>
+
+    <div id="faucet-hint" class="faucet-box poly" style="display:none;">
+      <span>Нет MATIC? Получите бесплатно через faucet:</span>
+      <a href="https://faucet.polygon.technology" target="_blank">faucet.polygon.technology ↗</a>
+    </div>
+
+    <button class="btn-main poly" id="btn-register" onclick="registerHash()" disabled>
+      Зарегистрировать в блокчейне
+    </button>
+
+    <div class="status-box" id="reg-status"></div>
+
+    <div class="export-note" id="export-note" style="display:none;">
+      <strong>Transaction ID для сертификата:</strong><br>
+      <code id="export-txid"></code><br>
+      <span style="margin-top:4px; display:block;">Вставьте этот TX Hash в поле "Reg. ID" сертификата Certificate Pro для полной связки.</span>
+    </div>
+
+  </div>
+
+  <!-- ═══ TAB: VERIFY ═══ -->
+  <div id="tab-verify" style="display:none;">
+
+    <div class="section-label">Проверить файл по блокчейну</div>
+    <div class="card">
+      <div class="file-drop" id="file-drop-v" ondragover="onDragV(event,true)" ondragleave="onDragV(event,false)" ondrop="onDropV(event)">
+        <input type="file" onchange="loadFileV(this.files[0])">
+        <div class="drop-icon">◎</div>
+        <div class="drop-text"><strong>Загрузите файл</strong> для проверки</div>
+      </div>
+      <div class="hash-display" id="hash-out-v" style="margin-top:12px;"></div>
+    </div>
+
+    <div class="field" style="margin-top:16px;">
+      <label>Transaction Hash (из истории или сертификата)</label>
+      <input type="text" id="v-txhash" placeholder="0x..." class="r-input">
+    </div>
+
+    <button class="btn-main poly" id="btn-verify" onclick="verifyHash()" disabled>
+      Проверить совпадение
+    </button>
+
+    <div class="verify-result" id="verify-result">
+      <div class="verify-match" id="verify-match"></div>
+    </div>
+
+  </div>
+
+  <!-- ═══ TAB: HISTORY ═══ -->
+  <div id="tab-history" style="display:none;">
+    <div class="section-label">Зарегистрированные работы</div>
+    <div id="history-list"></div>
+  </div>
+
+</div>
+
+<script>
+/* ══ NETWORK CONFIG ══ */
+const NETWORKS = {
+  polygon: {
+    chainId: '0x89',
+    name: 'Polygon Mainnet',
+    rpc: 'https://polygon-rpc.com',
+    explorer: 'https://polygonscan.com/tx/',
+    symbol: 'MATIC',
+    info: 'Polygon Mainnet — ~$0.001 за транзакцию / требуется MATIC',
+    faucet: true,
+    cls: 'poly'
+  },
+  sepolia: {
+    chainId: '0xaa36a7',
+    name: 'Sepolia Testnet',
+    rpc: 'https://rpc.sepolia.org',
+    explorer: 'https://sepolia.etherscan.io/tx/',
+    symbol: 'ETH',
+    info: 'Sepolia Testnet — полностью бесплатно / тестовый ETH',
+    faucet: false,
+    cls: 'sep',
+    faucetUrl: 'https://sepoliafaucet.com'
+  }
+};
+
+let currentNet = 'polygon';
+let walletAddr = null;
+let currentHash = '';
+let currentHashV = '';
+let currentFile = null;
+
+/* ══ NETWORK ══ */
+function switchNet(net) {
+  currentNet = net;
+  const cfg = NETWORKS[net];
+
+  document.querySelectorAll('.net-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector(`.net-btn.${cfg.cls}`).classList.add('active');
+
+  const ni = document.getElementById('net-info');
+  ni.className = `net-info ${cfg.cls}`;
+  document.getElementById('net-info-text').textContent = cfg.info;
+
+  document.querySelectorAll('.btn-main').forEach(b => {
+    b.className = b.className.replace(/\b(poly|sep)\b/g, cfg.cls);
+  });
+  document.querySelectorAll('.r-input').forEach(i => {
+    i.classList.toggle('sep-mode', net === 'sepolia');
+  });
+  document.querySelectorAll('.file-drop').forEach(d => {
+    d.classList.toggle('sep-mode', net === 'sepolia');
+  });
+
+  const fh = document.getElementById('faucet-hint');
+  if (cfg.faucet) {
+    fh.style.display = 'flex'; fh.className = `faucet-box ${cfg.cls}`;
+  } else {
+    fh.style.display = 'none';
+  }
+  // Sepolia also has a faucet but different
+  if (net === 'sepolia') {
+    fh.style.display = 'flex';
+    fh.className = `faucet-box sep`;
+    fh.innerHTML = `<span>Нет тестового ETH? Получите бесплатно:</span><a href="https://sepoliafaucet.com" target="_blank">sepoliafaucet.com ↗</a>`;
+  } else {
+    fh.style.display = 'flex';
+    fh.className = `faucet-box poly`;
+    fh.innerHTML = `<span>Нет MATIC? Получите бесплатно через faucet:</span><a href="https://faucet.polygon.technology" target="_blank">faucet.polygon.technology ↗</a>`;
+  }
+}
+
+/* ══ WALLET ══ */
+async function connectWallet() {
+  if (!window.ethereum) {
+    alert('MetaMask не найден. Установите расширение MetaMask и перезагрузите страницу.');
+    return;
+  }
+  try {
+    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+    walletAddr = accounts[0];
+    await switchChain();
+    updateWalletUI();
+  } catch (e) {
+    showStatus('reg-status', 'error', 'Подключение отклонено: ' + (e.message || e));
+  }
+}
+
+async function switchChain() {
+  const cfg = NETWORKS[currentNet];
+  try {
+    await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: cfg.chainId }] });
+  } catch (e) {
+    if (e.code === 4902) {
+      await window.ethereum.request({
+        method: 'wallet_addEthereumChain',
+        params: [{ chainId: cfg.chainId, chainName: cfg.name, rpcUrls: [cfg.rpc], nativeCurrency: { name: cfg.symbol, symbol: cfg.symbol, decimals: 18 } }]
+      });
+    }
+  }
+}
+
+function updateWalletUI() {
+  const d = document.getElementById('wallet-display');
+  const b = document.getElementById('btn-connect');
+  if (walletAddr) {
+    const short = walletAddr.slice(0,6) + '...' + walletAddr.slice(-4);
+    d.textContent = '✓ ' + short;
+    d.className = 'wallet-addr connected';
+    b.textContent = 'Подключено';
+    b.className = 'btn-connect connected';
+  }
+  checkRegReady();
+}
+
+/* ══ FILE / HASH ══ */
+function onDrag(e, on) { e.preventDefault(); document.getElementById('file-drop').classList.toggle('drag', on); }
+function onDrop(e) { e.preventDefault(); onDrag(e, false); loadFile(e.dataTransfer.files[0]); }
+function onDragV(e, on) { e.preventDefault(); document.getElementById('file-drop-v').classList.toggle('drag', on); }
+function onDropV(e) { e.preventDefault(); onDragV(e, false); loadFileV(e.dataTransfer.files[0]); }
+
+async function loadFile(file) {
+  if (!file) return;
+  currentFile = file;
+  currentHash = await hashFile(file);
+  const el = document.getElementById('hash-out');
+  el.innerHTML = `<div style="color:var(--muted);font-size:10px;margin-bottom:4px;">SHA-256 · ${file.name} · ${(file.size/1024).toFixed(1)} KB</div>${currentHash}`;
+  el.classList.add('show');
+  checkRegReady();
+}
+
+async function loadFileV(file) {
+  if (!file) return;
+  currentHashV = await hashFile(file);
+  const el = document.getElementById('hash-out-v');
+  el.innerHTML = `<div style="color:var(--muted);font-size:10px;margin-bottom:4px;">SHA-256 · ${file.name}</div>${currentHashV}`;
+  el.classList.add('show');
+  checkVerifyReady();
+}
+
+async function hashFile(file) {
+  const buf = await file.arrayBuffer();
+  const h = await crypto.subtle.digest('SHA-256', buf);
+  return Array.from(new Uint8Array(h)).map(b => b.toString(16).padStart(2,'0')).join('').toUpperCase();
+}
+
+function checkRegReady() {
+  document.getElementById('btn-register').disabled = !(walletAddr && currentHash);
+}
+function checkVerifyReady() {
+  document.getElementById('btn-verify').disabled = !currentHashV;
+}
+
+/* ══ REGISTER ══ */
+async function registerHash() {
+  if (!walletAddr) { alert('Сначала подключите MetaMask'); return; }
+  if (!currentHash) { alert('Выберите файл для хеша'); return; }
+
+  const title  = document.getElementById('r-title').value.trim()  || 'Untitled';
+  const author = document.getElementById('r-author').value.trim() || 'Unknown';
+  const regid  = document.getElementById('r-regid').value.trim();
+
+  await switchChain();
+
+  /* Payload: JSON в hex */
+  const payload = JSON.stringify({
+    app: 'HashChain',
+    hash: currentHash,
+    title, author, regid,
+    ts: Date.now()
+  });
+  const hexData = '0x' + Array.from(new TextEncoder().encode(payload)).map(b => b.toString(16).padStart(2,'0')).join('');
+
+  showStatus('reg-status', 'pending', '⏳ Ожидание подтверждения в MetaMask...');
+  document.getElementById('btn-register').classList.add('loading');
+  document.getElementById('btn-register').disabled = true;
+
+  try {
+    const txHash = await window.ethereum.request({
+      method: 'eth_sendTransaction',
+      params: [{
+        from: walletAddr,
+        to: walletAddr,   /* отправка самому себе = минимальный gas */
+        value: '0x0',
+        data: hexData
+      }]
+    });
+
+    const explorer = NETWORKS[currentNet].explorer + txHash;
+    showStatus('reg-status', 'success',
+      `✓ Транзакция отправлена!\n\nTX Hash:\n${txHash}\n\n<a href="${explorer}" target="_blank">Открыть в эксплорере ↗</a>`
+    );
+
+    /* Показать для экспорта в сертификат */
+    document.getElementById('export-txid').textContent = txHash;
+    document.getElementById('export-note').style.display = 'block';
+
+    /* Сохранить в историю */
+    saveHistory({
+      txHash, title, author, regid,
+      fileHash: currentHash,
+      network: currentNet,
+      date: new Date().toISOString(),
+      explorer
+    });
+
+  } catch (e) {
+    showStatus('reg-status', 'error', '✗ Ошибка: ' + (e.message || JSON.stringify(e)));
+  }
+
+  document.getElementById('btn-register').classList.remove('loading');
+  document.getElementById('btn-register').disabled = false;
+}
+
+/* ══ VERIFY ══ */
+async function verifyHash() {
+  const txInput = document.getElementById('v-txhash').value.trim();
+  const result  = document.getElementById('verify-result');
+  const match   = document.getElementById('verify-match');
+  result.classList.add('show');
+
+  if (!currentHashV) { match.className = 'verify-match fail'; match.textContent = '✗ Загрузите файл для проверки'; return; }
+
+  /* Ищем в локальной истории */
+  const history = getHistory();
+  let found = null;
+
+  if (txInput) {
+    found = history.find(h => h.txHash.toLowerCase() === txInput.toLowerCase());
+  }
+  if (!found) {
+    found = history.find(h => h.fileHash.toUpperCase() === currentHashV.toUpperCase());
+  }
+
+  if (found) {
+    if (found.fileHash.toUpperCase() === currentHashV.toUpperCase()) {
+      match.className = 'verify-match ok';
+      match.innerHTML =
+        `✓ ФАЙЛ ПОДТВЕРЖДЁН\n\n` +
+        `Работа: ${found.title}\nАвтор: ${found.author}\n` +
+        `Дата регистрации: ${new Date(found.date).toLocaleString('ru')}\n` +
+        `Сеть: ${found.network === 'polygon' ? 'Polygon' : 'Sepolia'}\n` +
+        `TX: <a href="${found.explorer}" target="_blank" style="color:inherit;">${found.txHash.slice(0,18)}...↗</a>`;
+    } else {
+      match.className = 'verify-match fail';
+      match.innerHTML = '✗ НЕСОВПАДЕНИЕ\n\nТранзакция найдена, но хеш файла не совпадает.\nФайл был изменён или это другой файл.';
+    }
+  } else {
+    match.className = 'verify-match fail';
+    match.innerHTML = '⚠ Не найдено в локальной истории.\n\nЕсли транзакция была сделана на другом устройстве,\nпроверьте TX Hash напрямую в эксплорере.';
+    if (txInput) {
+      const cfg = NETWORKS[currentNet];
+      match.innerHTML += `\n<a href="${cfg.explorer}${txInput}" target="_blank" style="color:inherit;">Открыть ${txInput.slice(0,10)}... ↗</a>`;
+    }
+  }
+}
+
+/* ══ HISTORY ══ */
+const HIST_KEY = 'hashchain_history';
+function getHistory() { try { return JSON.parse(localStorage.getItem(HIST_KEY) || '[]'); } catch { return []; } }
+function saveHistory(entry) {
+  const h = getHistory();
+  h.unshift(entry);
+  localStorage.setItem(HIST_KEY, JSON.stringify(h.slice(0, 100)));
+  renderHistory();
+}
+
+function renderHistory() {
+  const list = document.getElementById('history-list');
+  const h = getHistory();
+  if (!h.length) {
+    list.innerHTML = '<div class="history-empty">История пуста — зарегистрируйте первую работу</div>';
+    return;
+  }
+  list.innerHTML = h.map((item, i) => `
+    <div class="tx-item">
+      <div class="tx-top">
+        <div class="tx-name">${item.title}</div>
+        <div class="tx-date">${new Date(item.date).toLocaleDateString('ru', {day:'2-digit',month:'short',year:'numeric'})}</div>
+      </div>
+      <div class="tx-hash">TX: <span>${item.txHash}</span></div>
+      <div class="tx-hash" style="font-size:9px;">File hash: <span style="color:var(--muted)">${item.fileHash.slice(0,32)}...</span></div>
+      <div class="tx-badges">
+        <span class="badge ${item.network === 'polygon' ? 'poly' : 'sep'}">${item.network === 'polygon' ? 'Polygon' : 'Sepolia'}</span>
+        <span class="badge confirmed">✓ Отправлена</span>
+        ${item.author ? `<span class="badge" style="background:var(--surface2);border:1px solid var(--border2);color:var(--muted);">${item.author}</span>` : ''}
+      </div>
+      <div class="tx-actions">
+        <a href="${item.explorer}" target="_blank"><button class="btn-small">Открыть в эксплорере ↗</button></a>
+        <button class="btn-small" onclick="copyTx('${item.txHash}')">Копировать TX</button>
+        <button class="btn-small danger" onclick="deleteHistory(${i})">Удалить</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function deleteHistory(i) {
+  const h = getHistory();
+  h.splice(i, 1);
+  localStorage.setItem(HIST_KEY, JSON.stringify(h));
+  renderHistory();
+}
+
+function copyTx(tx) {
+  navigator.clipboard.writeText(tx);
+}
+
+/* ══ TABS ══ */
+function showTab(name) {
+  ['register','verify','history'].forEach(t => {
+    document.getElementById('tab-' + t).style.display = t === name ? 'block' : 'none';
+    document.querySelectorAll('.tab')[['register','verify','history'].indexOf(t)].classList.toggle('active', t === name);
+  });
+  if (name === 'history') renderHistory();
+}
+
+/* ══ STATUS ══ */
+function showStatus(id, type, msg) {
+  const el = document.getElementById(id);
+  el.className = `status-box ${type} show`;
+  el.innerHTML = msg.replace(/\n/g, '<br>');
+}
+
+/* ══ INIT ══ */
+switchNet('polygon');
+renderHistory();
+if (window.ethereum) {
+  window.ethereum.request({ method: 'eth_accounts' }).then(a => {
+    if (a.length) { walletAddr = a[0]; updateWalletUI(); }
+  });
+  window.ethereum.on('accountsChanged', a => {
+    walletAddr = a[0] || null;
+    updateWalletUI();
+    if (!walletAddr) {
+      document.getElementById('wallet-display').textContent = 'MetaMask не подключён';
+      document.getElementById('wallet-display').className = 'wallet-addr';
+      document.getElementById('btn-connect').textContent = 'Подключить MetaMask';
+      document.getElementById('btn-connect').className = 'btn-connect';
+    }
+  });
+}
+</script>
+</body>
+</html>
