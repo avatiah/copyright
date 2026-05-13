@@ -3,720 +3,512 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Blockchain Copyright Registry</title>
+<title>HashChain — Sepolia Registry</title>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 :root {
-  --bg: #0a0a0f;
-  --surface: #0f0f17;
-  --surface2: #16161f;
-  --border: #1e1e2e;
-  --border2: #2a2a3e;
-  --text: #e0e0f0;
-  --muted: #6060a0;
-  --dim: #30304a;
-  --poly: #8247e5;
-  --poly-light: #a67ff0;
-  --poly-dim: #1a0f33;
-  --sep: #00bfff;
-  --sep-light: #66d9ff;
-  --sep-dim: #00254a;
-  --success: #00e5a0;
-  --success-dim: #003322;
-  --danger: #ff4466;
-  --danger-dim: #2a0011;
-  --warn: #ffaa00;
-  --warn-dim: #2a1f00;
-  --radius: 8px;
+  --bg:     #08090f;
+  --surf:   #0d0e18;
+  --surf2:  #13141f;
+  --bdr:    #1c1d2e;
+  --bdr2:   #262840;
+  --text:   #dde0f5;
+  --muted:  #525580;
+  --acc:    #00b4ff;
+  --acc-l:  #55d4ff;
+  --acc-d:  #001e33;
+  --ok:     #00e5a0;
+  --ok-d:   #002e20;
+  --err:    #ff4466;
+  --err-d:  #280010;
+  --warn:   #ffaa00;
+  --warn-d: #281800;
+  --r: 8px;
   --mono: 'IBM Plex Mono', monospace;
   --sans: 'IBM Plex Sans', sans-serif;
 }
-
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: var(--sans); background: var(--bg); color: var(--text); min-height: 100vh; line-height: 1.5; }
-
-/* GRID NOISE BG */
+body { font-family: var(--sans); background: var(--bg); color: var(--text); min-height: 100vh; }
 body::before {
-  content: ''; position: fixed; inset: 0; z-index: 0; pointer-events: none;
-  background-image: repeating-linear-gradient(0deg, transparent, transparent 39px, var(--border) 39px, var(--border) 40px),
-                    repeating-linear-gradient(90deg, transparent, transparent 39px, var(--border) 39px, var(--border) 40px);
-  opacity: 0.3;
+  content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background-image:
+    repeating-linear-gradient(0deg,  transparent, transparent 47px, var(--bdr) 47px, var(--bdr) 48px),
+    repeating-linear-gradient(90deg, transparent, transparent 47px, var(--bdr) 47px, var(--bdr) 48px);
+  opacity: 0.22;
 }
-
-.app { position: relative; z-index: 1; max-width: 780px; margin: 0 auto; padding: 40px 20px 80px; }
+.wrap { position: relative; z-index: 1; max-width: 680px; margin: 0 auto; padding: 48px 20px 80px; }
 
 /* HEADER */
-.header { margin-bottom: 40px; }
-.header-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
-.logo { font-family: var(--mono); font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
-.title { font-family: var(--mono); font-size: 26px; font-weight: 500; color: var(--text); }
-.title span { color: var(--poly-light); }
-
-/* NETWORK SWITCHER */
-.net-switcher { display: flex; gap: 6px; padding: 4px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; }
-.net-btn {
-  padding: 7px 16px; border: 1px solid transparent; border-radius: 7px;
-  font-family: var(--mono); font-size: 11px; letter-spacing: 1px; text-transform: uppercase;
-  cursor: pointer; transition: all 0.2s; background: transparent; color: var(--muted);
+.hdr { margin-bottom: 36px; }
+.hdr-badge {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--acc-d); border: 1px solid var(--acc); border-radius: 20px;
+  padding: 4px 14px 4px 10px; font-family: var(--mono); font-size: 11px;
+  color: var(--acc-l); margin-bottom: 16px;
 }
-.net-btn.poly.active { background: var(--poly-dim); border-color: var(--poly); color: var(--poly-light); }
-.net-btn.sep.active  { background: var(--sep-dim);  border-color: var(--sep);  color: var(--sep-light); }
-.net-btn:not(.active):hover { color: var(--text); border-color: var(--border2); }
-
-.net-info {
-  margin-top: 14px; padding: 10px 14px; border-radius: var(--radius);
-  font-family: var(--mono); font-size: 11px; display: flex; align-items: center; gap: 10px;
-  border: 1px solid; transition: all 0.3s;
-}
-.net-info.poly { background: var(--poly-dim); border-color: var(--poly); color: var(--poly-light); }
-.net-info.sep  { background: var(--sep-dim);  border-color: var(--sep);  color: var(--sep-light);  }
-.net-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; animation: pulse 2s infinite; }
-.net-info.poly .net-dot { background: var(--poly-light); box-shadow: 0 0 6px var(--poly); }
-.net-info.sep  .net-dot { background: var(--sep-light);  box-shadow: 0 0 6px var(--sep);  }
-@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+.dot { width: 6px; height: 6px; border-radius: 50%; background: var(--acc); box-shadow: 0 0 6px var(--acc); animation: blink 2s infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+.hdr h1 { font-family: var(--mono); font-size: 28px; font-weight: 500; letter-spacing: -.5px; }
+.hdr h1 em { color: var(--acc-l); font-style: normal; }
+.hdr p { font-size: 14px; color: var(--muted); margin-top: 8px; line-height: 1.6; }
 
 /* WALLET */
-.wallet-bar {
-  margin-top: 20px; padding: 12px 16px;
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: var(--radius); display: flex; align-items: center; justify-content: space-between; gap: 12px;
+.wallet-card {
+  background: var(--surf); border: 1px solid var(--bdr2); border-radius: var(--r);
+  padding: 16px 18px; display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; margin-bottom: 16px;
 }
-.wallet-addr { font-family: var(--mono); font-size: 12px; color: var(--muted); }
-.wallet-addr.connected { color: var(--success); }
-.btn-connect {
-  padding: 7px 16px; background: transparent; border: 1px solid var(--border2);
-  border-radius: 6px; font-family: var(--mono); font-size: 11px; letter-spacing: 1px;
-  text-transform: uppercase; color: var(--text); cursor: pointer; transition: all 0.2s; white-space: nowrap;
+.wallet-label { font-family: var(--mono); font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 3px; }
+.wallet-addr { font-family: var(--mono); font-size: 13px; color: var(--muted); }
+.wallet-addr.on { color: var(--ok); }
+.btn-mm {
+  padding: 9px 18px; background: #f6851b; border: none; border-radius: 6px;
+  font-family: var(--mono); font-size: 11px; letter-spacing: 1px; text-transform: uppercase;
+  color: #fff; cursor: pointer; transition: opacity .2s; white-space: nowrap; flex-shrink: 0;
 }
-.btn-connect:hover { border-color: var(--poly-light); color: var(--poly-light); }
-.btn-connect.connected { border-color: var(--success); color: var(--success); }
+.btn-mm:hover { opacity: .85; }
+.btn-mm.on { background: transparent; color: var(--ok); border: 1px solid var(--ok); }
 
-/* SECTIONS */
-.section { margin-top: 28px; }
-.section-label {
-  font-family: var(--mono); font-size: 10px; letter-spacing: 3px; text-transform: uppercase;
-  color: var(--muted); margin-bottom: 12px; display: flex; align-items: center; gap: 10px;
+/* FAUCET */
+.faucet {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  background: var(--acc-d); border: 1px solid var(--acc); border-radius: var(--r);
+  padding: 12px 16px; margin-bottom: 24px;
+  font-family: var(--mono); font-size: 11px; color: var(--acc-l); line-height: 1.7;
 }
-.section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+.faucet-links { display: flex; gap: 8px; flex-wrap: wrap; }
+.faucet-links a {
+  padding: 5px 12px; border: 1px solid var(--acc); border-radius: 5px;
+  color: var(--acc-l); text-decoration: none; font-size: 11px; transition: background .2s;
+}
+.faucet-links a:hover { background: rgba(0,180,255,.15); }
 
 /* TABS */
-.tabs { display: flex; gap: 2px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 3px; margin-bottom: 20px; }
-.tab { flex: 1; padding: 9px; text-align: center; font-family: var(--mono); font-size: 11px; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; border-radius: 6px; color: var(--muted); transition: all 0.2s; border: none; background: transparent; }
-.tab.active { background: var(--surface2); color: var(--text); border: 1px solid var(--border2); }
+.tabs { display: flex; background: var(--surf); border: 1px solid var(--bdr); border-radius: var(--r); padding: 3px; margin-bottom: 22px; }
+.tab { flex: 1; padding: 10px; text-align: center; font-family: var(--mono); font-size: 11px; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; border-radius: 6px; color: var(--muted); transition: all .2s; border: none; background: transparent; }
+.tab.on { background: var(--surf2); color: var(--text); border: 1px solid var(--bdr2); }
 
 /* CARD */
-.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
-
-/* FORM */
-.field { margin-bottom: 16px; }
-.field label { font-family: var(--mono); font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 7px; }
-.field input[type=text] {
-  width: 100%; padding: 10px 14px;
-  background: var(--bg); border: 1px solid var(--border2);
-  border-radius: var(--radius); color: var(--text);
-  font-family: var(--mono); font-size: 13px; outline: none; transition: border-color 0.2s;
+.card { background: var(--surf); border: 1px solid var(--bdr); border-radius: var(--r); padding: 20px 22px; margin-bottom: 14px; }
+.sec-label {
+  font-family: var(--mono); font-size: 10px; letter-spacing: 3px; text-transform: uppercase;
+  color: var(--muted); margin-bottom: 14px; display: flex; align-items: center; gap: 10px;
 }
-.field input:focus { border-color: var(--poly-light); }
-.field input.sep-mode:focus { border-color: var(--sep-light); }
+.sec-label::after { content:''; flex:1; height:1px; background: var(--bdr); }
 
-.file-drop {
-  border: 1px dashed var(--border2); border-radius: var(--radius);
-  padding: 28px 20px; text-align: center; cursor: pointer; transition: all 0.2s;
-  position: relative;
+/* FIELDS */
+.field { margin-bottom: 14px; }
+.field:last-child { margin-bottom: 0; }
+.field label { font-family: var(--mono); font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 6px; }
+.field input {
+  width: 100%; padding: 10px 13px; background: var(--bg); border: 1px solid var(--bdr2);
+  border-radius: var(--r); color: var(--text); font-family: var(--mono); font-size: 13px;
+  outline: none; transition: border-color .2s;
 }
-.file-drop:hover, .file-drop.drag { border-color: var(--poly-light); background: var(--poly-dim); }
-.file-drop.sep-mode:hover, .file-drop.sep-mode.drag { border-color: var(--sep-light); background: var(--sep-dim); }
-.file-drop input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
-.drop-icon { font-size: 28px; margin-bottom: 8px; }
-.drop-text { font-family: var(--mono); font-size: 12px; color: var(--muted); }
-.drop-text strong { color: var(--text); }
+.field input:focus { border-color: var(--acc); }
 
-.hash-display {
-  margin-top: 12px; padding: 12px 14px;
-  background: var(--bg); border: 1px solid var(--border2);
-  border-radius: var(--radius); font-family: var(--mono); font-size: 11px;
-  word-break: break-all; color: var(--success); line-height: 1.6; display: none;
+/* FILE DROP */
+.drop {
+  border: 1px dashed var(--bdr2); border-radius: var(--r); padding: 32px 20px;
+  text-align: center; cursor: pointer; transition: all .2s; position: relative; background: var(--bg);
 }
-.hash-display.show { display: block; }
+.drop:hover, .drop.drag { border-color: var(--acc); background: var(--acc-d); }
+.drop input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+.drop-ico { font-size: 28px; margin-bottom: 10px; color: var(--muted); }
+.drop-txt { font-family: var(--mono); font-size: 12px; color: var(--muted); line-height: 1.8; }
+.drop-txt strong { color: var(--text); }
+.hash-result {
+  display: none; margin-top: 12px; padding: 12px 14px; background: var(--ok-d);
+  border: 1px solid var(--ok); border-radius: var(--r); font-family: var(--mono);
+  font-size: 11px; color: var(--ok); word-break: break-all; line-height: 1.7;
+}
+.hash-result.show { display: block; }
 
-/* BUTTON */
+/* BUTTONS */
 .btn-main {
-  width: 100%; padding: 14px; margin-top: 16px;
-  border: none; border-radius: var(--radius); cursor: pointer;
+  width: 100%; padding: 14px; border: none; border-radius: var(--r); cursor: pointer;
   font-family: var(--mono); font-size: 12px; letter-spacing: 2px; text-transform: uppercase;
-  font-weight: 500; transition: all 0.2s; position: relative; overflow: hidden;
+  font-weight: 500; transition: all .2s; background: var(--acc); color: #000;
+  position: relative; overflow: hidden;
 }
-.btn-main.poly { background: var(--poly); color: #fff; }
-.btn-main.poly:hover { background: var(--poly-light); }
-.btn-main.sep  { background: var(--sep);  color: #000; }
-.btn-main.sep:hover  { background: var(--sep-light); }
-.btn-main:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-main:hover { background: var(--acc-l); }
+.btn-main:disabled { opacity: .35; cursor: not-allowed; }
 .btn-main.loading::after {
-  content: ''; position: absolute; bottom: 0; left: 0; height: 2px;
-  background: rgba(255,255,255,0.5); animation: progress 1.5s infinite;
+  content: ''; position: absolute; bottom: 0; left: -100%; width: 60%; height: 2px;
+  background: rgba(255,255,255,.6); animation: slide 1.2s infinite linear;
 }
-@keyframes progress { 0%{width:0;left:0} 50%{width:60%;left:20%} 100%{width:0;left:100%} }
-
-.btn-small {
-  padding: 6px 14px; border-radius: 5px; font-family: var(--mono); font-size: 10px;
-  letter-spacing: 1px; text-transform: uppercase; cursor: pointer; border: 1px solid var(--border2);
-  background: transparent; color: var(--muted); transition: all 0.2s; white-space: nowrap;
+@keyframes slide { to { left: 140%; } }
+.btn-sm {
+  padding: 5px 12px; border-radius: 5px; font-family: var(--mono); font-size: 10px;
+  letter-spacing: 1px; text-transform: uppercase; cursor: pointer;
+  border: 1px solid var(--bdr2); background: transparent; color: var(--muted); transition: all .2s;
 }
-.btn-small:hover { color: var(--text); border-color: var(--text); }
-.btn-small.danger { border-color: var(--danger); color: var(--danger); }
-
-/* FAUCET LINK */
-.faucet-box {
-  padding: 10px 14px; border-radius: var(--radius);
-  font-family: var(--mono); font-size: 11px; display: flex; align-items: center; gap: 10px;
-  justify-content: space-between; margin-top: 10px;
-}
-.faucet-box.poly { background: var(--poly-dim); border: 1px solid var(--poly); color: var(--poly-light); }
-.faucet-box.sep  { background: var(--sep-dim);  border: 1px solid var(--sep);  color: var(--sep-light);  }
-.faucet-box a { color: inherit; text-decoration: underline; }
+.btn-sm:hover { color: var(--text); background: var(--surf2); }
+.btn-sm.red { border-color: #5a1a1a; color: var(--err); }
+.btn-sm.red:hover { background: var(--err-d); }
 
 /* STATUS */
-.status-box {
-  padding: 14px 16px; border-radius: var(--radius); margin-top: 16px;
-  font-family: var(--mono); font-size: 12px; line-height: 1.7; display: none;
-  border: 1px solid;
-}
-.status-box.show { display: block; }
-.status-box.pending { background: var(--warn-dim); border-color: var(--warn); color: var(--warn); }
-.status-box.success { background: var(--success-dim); border-color: var(--success); color: var(--success); }
-.status-box.error   { background: var(--danger-dim); border-color: var(--danger); color: var(--danger); }
-.status-box a { color: inherit; }
-.status-copy { float: right; }
+.status { display: none; padding: 14px 16px; border-radius: var(--r); font-family: var(--mono); font-size: 12px; line-height: 1.8; border: 1px solid; margin-top: 14px; word-break: break-all; }
+.status.show { display: block; }
+.status.pending { background: var(--warn-d); border-color: var(--warn); color: var(--warn); }
+.status.ok  { background: var(--ok-d);  border-color: var(--ok);  color: var(--ok); }
+.status.err { background: var(--err-d); border-color: var(--err); color: var(--err); }
+.status a { color: inherit; }
+
+/* EXPORT */
+.export-box { display: none; margin-top: 14px; padding: 16px 18px; background: var(--surf2); border: 1px solid var(--bdr2); border-radius: var(--r); }
+.export-box.show { display: block; }
+.export-box .lbl { font-family: var(--mono); font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+.tx-code { font-family: var(--mono); font-size: 11px; color: var(--acc-l); word-break: break-all; background: var(--acc-d); padding: 8px 10px; border-radius: 5px; margin-bottom: 10px; line-height: 1.6; }
+.export-note { font-size: 12px; color: var(--muted); line-height: 1.6; }
+.export-note strong { color: var(--text); }
 
 /* HISTORY */
-.history-empty { font-family: var(--mono); font-size: 12px; color: var(--muted); text-align: center; padding: 30px; }
-.tx-item {
-  padding: 14px 16px; border: 1px solid var(--border);
-  border-radius: var(--radius); margin-bottom: 10px; background: var(--surface);
-  transition: border-color 0.2s;
-}
-.tx-item:hover { border-color: var(--border2); }
-.tx-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 8px; flex-wrap: wrap; }
-.tx-name { font-size: 14px; font-weight: 500; }
-.tx-date { font-family: var(--mono); font-size: 10px; color: var(--muted); white-space: nowrap; }
-.tx-hash { font-family: var(--mono); font-size: 10px; color: var(--muted); word-break: break-all; margin-bottom: 6px; }
-.tx-hash span { color: var(--text); }
-.tx-badges { display: flex; gap: 6px; flex-wrap: wrap; }
-.badge {
-  padding: 2px 8px; border-radius: 4px; font-family: var(--mono); font-size: 10px; letter-spacing: 1px;
-}
-.badge.poly { background: var(--poly-dim); color: var(--poly-light); border: 1px solid var(--poly); }
-.badge.sep  { background: var(--sep-dim);  color: var(--sep-light);  border: 1px solid var(--sep); }
-.badge.confirmed { background: var(--success-dim); color: var(--success); border: 1px solid var(--success); }
-.badge.pending   { background: var(--warn-dim);    color: var(--warn);    border: 1px solid var(--warn); }
-.tx-actions { display: flex; gap: 6px; margin-top: 10px; }
+.empty { font-family: var(--mono); font-size: 12px; color: var(--muted); text-align: center; padding: 40px 20px; }
+.tx-item { background: var(--surf); border: 1px solid var(--bdr); border-radius: var(--r); padding: 16px 18px; margin-bottom: 10px; transition: border-color .2s; }
+.tx-item:hover { border-color: var(--bdr2); }
+.tx-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 8px; flex-wrap: wrap; }
+.tx-name { font-size: 15px; font-weight: 500; }
+.tx-date { font-family: var(--mono); font-size: 10px; color: var(--muted); }
+.tx-detail { font-family: var(--mono); font-size: 10px; color: var(--muted); margin-bottom: 4px; word-break: break-all; }
+.tx-detail span { color: var(--text); }
+.tx-acts { display: flex; gap: 6px; margin-top: 12px; flex-wrap: wrap; }
+.badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-family: var(--mono); font-size: 10px; background: var(--acc-d); border: 1px solid var(--acc); color: var(--acc-l); }
+.badge.ok { background: var(--ok-d); border-color: var(--ok); color: var(--ok); }
 
 /* VERIFY */
-.verify-result { margin-top: 16px; display: none; }
-.verify-result.show { display: block; }
-.verify-match {
-  padding: 14px 16px; border-radius: var(--radius); font-family: var(--mono); font-size: 12px;
-  line-height: 1.8; border: 1px solid;
-}
-.verify-match.ok    { background: var(--success-dim); border-color: var(--success); color: var(--success); }
-.verify-match.fail  { background: var(--danger-dim);  border-color: var(--danger);  color: var(--danger);  }
+.verify-out { display: none; margin-top: 16px; }
+.verify-out.show { display: block; }
+.verify-card { padding: 16px; border-radius: var(--r); font-family: var(--mono); font-size: 12px; line-height: 1.9; border: 1px solid; white-space: pre-wrap; word-break: break-all; }
+.verify-card.ok  { background: var(--ok-d);  border-color: var(--ok);  color: var(--ok); }
+.verify-card.err { background: var(--err-d); border-color: var(--err); color: var(--err); }
+.verify-card a { color: inherit; }
 
-/* EXPORT NOTE */
-.export-note {
-  margin-top: 14px; padding: 10px 14px; background: var(--surface2);
-  border: 1px solid var(--border); border-radius: var(--radius);
-  font-family: var(--mono); font-size: 11px; color: var(--muted);
-}
-.export-note strong { color: var(--text); }
-.export-note code { color: var(--poly-light); background: var(--poly-dim); padding: 1px 5px; border-radius: 3px; }
-
-/* RESPONSIVE */
-@media(max-width:600px) {
-  .title { font-size: 20px; }
-  .header-top { flex-direction: column; }
-}
+@media(max-width:520px) { .hdr h1 { font-size: 22px; } .faucet { flex-direction: column; } }
 </style>
 </head>
 <body>
-<div class="app">
+<div class="wrap">
 
-  <!-- HEADER -->
-  <div class="header">
-    <div class="header-top">
-      <div>
-        <div class="logo">// Blockchain Copyright Registry</div>
-        <div class="title">Hash<span>Chain</span> ™</div>
-      </div>
-      <div class="net-switcher">
-        <button class="net-btn poly active" onclick="switchNet('polygon')">Polygon</button>
-        <button class="net-btn sep" onclick="switchNet('sepolia')">Sepolia</button>
-      </div>
+  <div class="hdr">
+    <div class="hdr-badge"><div class="dot"></div>Sepolia Testnet · Бесплатно</div>
+    <h1>Hash<em>Chain</em></h1>
+    <p>Регистрация авторства в блокчейне Ethereum (Sepolia).<br>SHA-256 хеш вашего файла записывается навсегда — бесплатно.</p>
+  </div>
+
+  <div class="wallet-card">
+    <div>
+      <div class="wallet-label">MetaMask</div>
+      <div class="wallet-addr" id="w-addr">Не подключён</div>
     </div>
+    <button class="btn-mm" id="btn-mm" onclick="connectWallet()">Подключить</button>
+  </div>
 
-    <div class="net-info poly" id="net-info">
-      <div class="net-dot"></div>
-      <span id="net-info-text">Polygon Mainnet — ~$0.001 за транзакцию / требуется MATIC</span>
-    </div>
-
-    <div class="wallet-bar">
-      <div class="wallet-addr" id="wallet-display">MetaMask не подключён</div>
-      <button class="btn-connect" id="btn-connect" onclick="connectWallet()">Подключить MetaMask</button>
+  <div class="faucet">
+    <div>Нужен бесплатный тестовый ETH для оплаты gas:<br><span style="color:var(--muted)">Вставьте адрес кошелька → получите ETH за ~1 мин</span></div>
+    <div class="faucet-links">
+      <a href="https://sepoliafaucet.com" target="_blank">sepoliafaucet.com ↗</a>
+      <a href="https://faucets.chain.link/sepolia" target="_blank">Chainlink ↗</a>
+      <a href="https://www.alchemy.com/faucets/ethereum-sepolia" target="_blank">Alchemy ↗</a>
     </div>
   </div>
 
-  <!-- TABS -->
   <div class="tabs">
-    <button class="tab active" onclick="showTab('register')">Регистрация</button>
-    <button class="tab" onclick="showTab('verify')">Верификация</button>
-    <button class="tab" onclick="showTab('history')">История</button>
+    <button class="tab on" onclick="showTab('reg')">Регистрация</button>
+    <button class="tab"    onclick="showTab('ver')">Верификация</button>
+    <button class="tab"    onclick="showTab('his')">История</button>
   </div>
 
-  <!-- ═══ TAB: REGISTER ═══ -->
-  <div id="tab-register">
-
-    <div class="section-label">Информация о работе</div>
+  <!-- REGISTER -->
+  <div id="tab-reg">
     <div class="card">
-      <div class="field">
-        <label>Название работы *</label>
-        <input type="text" id="r-title" placeholder="Golden Lion" class="r-input">
-      </div>
-      <div class="field">
-        <label>Автор / Владелец *</label>
-        <input type="text" id="r-author" placeholder="Grill (avatiah)" class="r-input">
-      </div>
-      <div class="field">
-        <label>Reg. ID (необязательно)</label>
-        <input type="text" id="r-regid" placeholder="2026-COA-001" class="r-input">
-      </div>
+      <div class="sec-label">Информация о работе</div>
+      <div class="field"><label>Название *</label><input type="text" id="r-title" placeholder="Golden Lion"></div>
+      <div class="field"><label>Автор / Владелец *</label><input type="text" id="r-author" placeholder="Grill (avatiah)"></div>
+      <div class="field"><label>Reg. ID (необязательно)</label><input type="text" id="r-regid" placeholder="2026-COA-001"></div>
     </div>
-
-    <div class="section-label" style="margin-top:20px;">Файл для регистрации</div>
     <div class="card">
-      <div class="file-drop" id="file-drop" ondragover="onDrag(event,true)" ondragleave="onDrag(event,false)" ondrop="onDrop(event)">
+      <div class="sec-label">Файл для регистрации</div>
+      <div class="drop" id="drop"
+           ondragover="onDrag('drop',true,event)"
+           ondragleave="onDrag('drop',false,event)"
+           ondrop="onDrop(event)">
         <input type="file" onchange="loadFile(this.files[0])">
-        <div class="drop-icon">◈</div>
-        <div class="drop-text"><strong>Перетащите файл</strong> или нажмите для выбора</div>
-        <div class="drop-text" style="margin-top:4px; font-size:10px;">Любой тип файла — изображение, видео, документ</div>
+        <div class="drop-ico">◈</div>
+        <div class="drop-txt"><strong>Перетащите файл</strong> или нажмите для выбора<br><span style="font-size:10px;">Любой тип — изображение, видео, документ, архив</span></div>
       </div>
-      <div class="hash-display" id="hash-out"></div>
+      <div class="hash-result" id="hash-out"></div>
     </div>
-
-    <div id="faucet-hint" class="faucet-box poly" style="display:none;">
-      <span>Нет MATIC? Получите бесплатно через faucet:</span>
-      <a href="https://faucet.polygon.technology" target="_blank">faucet.polygon.technology ↗</a>
+    <button class="btn-main" id="btn-reg" onclick="registerHash()" disabled>Записать в блокчейн</button>
+    <div class="status" id="reg-status"></div>
+    <div class="export-box" id="export-box">
+      <div class="lbl">Transaction ID для сертификата</div>
+      <div class="tx-code" id="export-txid"></div>
+      <div style="display:flex;gap:8px;margin-bottom:12px;">
+        <button class="btn-sm" onclick="navigator.clipboard.writeText(document.getElementById('export-txid').textContent)">Копировать TX</button>
+        <a id="export-link" href="#" target="_blank"><button class="btn-sm">Открыть в Etherscan ↗</button></a>
+      </div>
+      <div class="export-note">Вставьте TX Hash в поле <strong>Reg. ID</strong> в Certificate Pro — полная связка: красивый PDF + верифицируемая блокчейн-запись.</div>
     </div>
-
-    <button class="btn-main poly" id="btn-register" onclick="registerHash()" disabled>
-      Зарегистрировать в блокчейне
-    </button>
-
-    <div class="status-box" id="reg-status"></div>
-
-    <div class="export-note" id="export-note" style="display:none;">
-      <strong>Transaction ID для сертификата:</strong><br>
-      <code id="export-txid"></code><br>
-      <span style="margin-top:4px; display:block;">Вставьте этот TX Hash в поле "Reg. ID" сертификата Certificate Pro для полной связки.</span>
-    </div>
-
   </div>
 
-  <!-- ═══ TAB: VERIFY ═══ -->
-  <div id="tab-verify" style="display:none;">
-
-    <div class="section-label">Проверить файл по блокчейну</div>
+  <!-- VERIFY -->
+  <div id="tab-ver" style="display:none;">
     <div class="card">
-      <div class="file-drop" id="file-drop-v" ondragover="onDragV(event,true)" ondragleave="onDragV(event,false)" ondrop="onDropV(event)">
+      <div class="sec-label">Файл для проверки</div>
+      <div class="drop" id="drop-v"
+           ondragover="onDrag('drop-v',true,event)"
+           ondragleave="onDrag('drop-v',false,event)"
+           ondrop="onDropV(event)">
         <input type="file" onchange="loadFileV(this.files[0])">
-        <div class="drop-icon">◎</div>
-        <div class="drop-text"><strong>Загрузите файл</strong> для проверки</div>
+        <div class="drop-ico">◎</div>
+        <div class="drop-txt"><strong>Загрузите файл</strong> для верификации</div>
       </div>
-      <div class="hash-display" id="hash-out-v" style="margin-top:12px;"></div>
+      <div class="hash-result" id="hash-out-v"></div>
     </div>
-
-    <div class="field" style="margin-top:16px;">
-      <label>Transaction Hash (из истории или сертификата)</label>
-      <input type="text" id="v-txhash" placeholder="0x..." class="r-input">
+    <div class="card">
+      <div class="sec-label">Transaction Hash</div>
+      <div class="field"><label>TX Hash из истории или сертификата</label><input type="text" id="v-tx" placeholder="0x..."></div>
     </div>
-
-    <button class="btn-main poly" id="btn-verify" onclick="verifyHash()" disabled>
-      Проверить совпадение
-    </button>
-
-    <div class="verify-result" id="verify-result">
-      <div class="verify-match" id="verify-match"></div>
-    </div>
-
+    <button class="btn-main" id="btn-ver" onclick="verifyHash()" disabled>Проверить</button>
+    <div class="verify-out" id="ver-out"><div class="verify-card" id="ver-card"></div></div>
   </div>
 
-  <!-- ═══ TAB: HISTORY ═══ -->
-  <div id="tab-history" style="display:none;">
-    <div class="section-label">Зарегистрированные работы</div>
-    <div id="history-list"></div>
+  <!-- HISTORY -->
+  <div id="tab-his" style="display:none;">
+    <div id="his-list"></div>
   </div>
 
 </div>
-
 <script>
-/* ══ NETWORK CONFIG ══ */
-const NETWORKS = {
-  polygon: {
-    chainId: '0x89',
-    name: 'Polygon Mainnet',
-    rpc: 'https://polygon-rpc.com',
-    explorer: 'https://polygonscan.com/tx/',
-    symbol: 'MATIC',
-    info: 'Polygon Mainnet — ~$0.001 за транзакцию / требуется MATIC',
-    faucet: true,
-    cls: 'poly'
-  },
-  sepolia: {
-    chainId: '0xaa36a7',
-    name: 'Sepolia Testnet',
-    rpc: 'https://rpc.sepolia.org',
-    explorer: 'https://sepolia.etherscan.io/tx/',
-    symbol: 'ETH',
-    info: 'Sepolia Testnet — полностью бесплатно / тестовый ETH',
-    faucet: false,
-    cls: 'sep',
-    faucetUrl: 'https://sepoliafaucet.com'
-  }
+const CHAIN_ID  = '0xaa36a7';
+const CHAIN_CFG = {
+  chainId: CHAIN_ID, chainName: 'Sepolia test network',
+  rpcUrls: ['https://rpc.sepolia.org', 'https://ethereum-sepolia-rpc.publicnode.com'],
+  nativeCurrency: { name: 'SepoliaETH', symbol: 'ETH', decimals: 18 },
+  blockExplorerUrls: ['https://sepolia.etherscan.io']
 };
+const EXPLORER  = 'https://sepolia.etherscan.io/tx/';
+const BURN_ADDR = '0x0000000000000000000000000000000000000000';
+const HIST_KEY  = 'hashchain_v2';
 
-let currentNet = 'polygon';
-let walletAddr = null;
-let currentHash = '';
-let currentHashV = '';
-let currentFile = null;
+let wallet   = null;
+let fileHash  = '';
+let fileHashV = '';
 
-/* ══ NETWORK ══ */
-function switchNet(net) {
-  currentNet = net;
-  const cfg = NETWORKS[net];
-
-  document.querySelectorAll('.net-btn').forEach(b => b.classList.remove('active'));
-  document.querySelector(`.net-btn.${cfg.cls}`).classList.add('active');
-
-  const ni = document.getElementById('net-info');
-  ni.className = `net-info ${cfg.cls}`;
-  document.getElementById('net-info-text').textContent = cfg.info;
-
-  document.querySelectorAll('.btn-main').forEach(b => {
-    b.className = b.className.replace(/\b(poly|sep)\b/g, cfg.cls);
-  });
-  document.querySelectorAll('.r-input').forEach(i => {
-    i.classList.toggle('sep-mode', net === 'sepolia');
-  });
-  document.querySelectorAll('.file-drop').forEach(d => {
-    d.classList.toggle('sep-mode', net === 'sepolia');
-  });
-
-  const fh = document.getElementById('faucet-hint');
-  if (cfg.faucet) {
-    fh.style.display = 'flex'; fh.className = `faucet-box ${cfg.cls}`;
-  } else {
-    fh.style.display = 'none';
-  }
-  // Sepolia also has a faucet but different
-  if (net === 'sepolia') {
-    fh.style.display = 'flex';
-    fh.className = `faucet-box sep`;
-    fh.innerHTML = `<span>Нет тестового ETH? Получите бесплатно:</span><a href="https://sepoliafaucet.com" target="_blank">sepoliafaucet.com ↗</a>`;
-  } else {
-    fh.style.display = 'flex';
-    fh.className = `faucet-box poly`;
-    fh.innerHTML = `<span>Нет MATIC? Получите бесплатно через faucet:</span><a href="https://faucet.polygon.technology" target="_blank">faucet.polygon.technology ↗</a>`;
-  }
-}
-
-/* ══ WALLET ══ */
+/* WALLET */
 async function connectWallet() {
-  if (!window.ethereum) {
-    alert('MetaMask не найден. Установите расширение MetaMask и перезагрузите страницу.');
-    return;
-  }
+  if (!window.ethereum) { alert('MetaMask не найден.\nУстановите расширение MetaMask и перезагрузите страницу.'); return; }
   try {
-    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-    walletAddr = accounts[0];
-    await switchChain();
-    updateWalletUI();
-  } catch (e) {
-    showStatus('reg-status', 'error', 'Подключение отклонено: ' + (e.message || e));
-  }
+    const accs = await window.ethereum.request({ method: 'eth_requestAccounts' });
+    wallet = accs[0];
+    await ensureSepolia();
+    setWalletUI(wallet);
+  } catch (e) { if (e.code !== 4001) alert('Ошибка: ' + (e.message || e)); }
 }
 
-async function switchChain() {
-  const cfg = NETWORKS[currentNet];
+async function ensureSepolia() {
   try {
-    await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: cfg.chainId }] });
+    await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: CHAIN_ID }] });
   } catch (e) {
-    if (e.code === 4902) {
-      await window.ethereum.request({
-        method: 'wallet_addEthereumChain',
-        params: [{ chainId: cfg.chainId, chainName: cfg.name, rpcUrls: [cfg.rpc], nativeCurrency: { name: cfg.symbol, symbol: cfg.symbol, decimals: 18 } }]
-      });
-    }
+    if (e.code === 4902 || e.code === -32603)
+      await window.ethereum.request({ method: 'wallet_addEthereumChain', params: [CHAIN_CFG] });
   }
 }
 
-function updateWalletUI() {
-  const d = document.getElementById('wallet-display');
-  const b = document.getElementById('btn-connect');
-  if (walletAddr) {
-    const short = walletAddr.slice(0,6) + '...' + walletAddr.slice(-4);
-    d.textContent = '✓ ' + short;
-    d.className = 'wallet-addr connected';
-    b.textContent = 'Подключено';
-    b.className = 'btn-connect connected';
-  }
-  checkRegReady();
+function setWalletUI(addr) {
+  document.getElementById('w-addr').textContent = '✓ ' + addr.slice(0,6) + '...' + addr.slice(-4);
+  document.getElementById('w-addr').className = 'wallet-addr on';
+  const b = document.getElementById('btn-mm');
+  b.textContent = 'Подключено'; b.className = 'btn-mm on';
+  checkReady();
 }
 
-/* ══ FILE / HASH ══ */
-function onDrag(e, on) { e.preventDefault(); document.getElementById('file-drop').classList.toggle('drag', on); }
-function onDrop(e) { e.preventDefault(); onDrag(e, false); loadFile(e.dataTransfer.files[0]); }
-function onDragV(e, on) { e.preventDefault(); document.getElementById('file-drop-v').classList.toggle('drag', on); }
-function onDropV(e) { e.preventDefault(); onDragV(e, false); loadFileV(e.dataTransfer.files[0]); }
+/* FILE */
+function onDrag(id, on, e) { e.preventDefault(); document.getElementById(id).classList.toggle('drag', on); }
+function onDrop(e)  { e.preventDefault(); onDrag('drop',  false, e); loadFile(e.dataTransfer.files[0]); }
+function onDropV(e) { e.preventDefault(); onDrag('drop-v',false, e); loadFileV(e.dataTransfer.files[0]); }
 
-async function loadFile(file) {
-  if (!file) return;
-  currentFile = file;
-  currentHash = await hashFile(file);
+async function loadFile(f) {
+  if (!f) return;
+  fileHash = await sha256(f);
   const el = document.getElementById('hash-out');
-  el.innerHTML = `<div style="color:var(--muted);font-size:10px;margin-bottom:4px;">SHA-256 · ${file.name} · ${(file.size/1024).toFixed(1)} KB</div>${currentHash}`;
+  el.innerHTML = `<span style="color:var(--muted);font-size:10px;">${f.name} · ${(f.size/1024).toFixed(1)} KB</span>\nSHA-256:\n${fileHash}`;
   el.classList.add('show');
-  checkRegReady();
+  checkReady();
 }
 
-async function loadFileV(file) {
-  if (!file) return;
-  currentHashV = await hashFile(file);
+async function loadFileV(f) {
+  if (!f) return;
+  fileHashV = await sha256(f);
   const el = document.getElementById('hash-out-v');
-  el.innerHTML = `<div style="color:var(--muted);font-size:10px;margin-bottom:4px;">SHA-256 · ${file.name}</div>${currentHashV}`;
+  el.innerHTML = `<span style="color:var(--muted);font-size:10px;">${f.name}</span>\nSHA-256:\n${fileHashV}`;
   el.classList.add('show');
-  checkVerifyReady();
+  document.getElementById('btn-ver').disabled = false;
 }
 
-async function hashFile(file) {
-  const buf = await file.arrayBuffer();
-  const h = await crypto.subtle.digest('SHA-256', buf);
+async function sha256(file) {
+  const h = await crypto.subtle.digest('SHA-256', await file.arrayBuffer());
   return Array.from(new Uint8Array(h)).map(b => b.toString(16).padStart(2,'0')).join('').toUpperCase();
 }
 
-function checkRegReady() {
-  document.getElementById('btn-register').disabled = !(walletAddr && currentHash);
-}
-function checkVerifyReady() {
-  document.getElementById('btn-verify').disabled = !currentHashV;
-}
+function checkReady() { document.getElementById('btn-reg').disabled = !(wallet && fileHash); }
 
-/* ══ REGISTER ══ */
+/* REGISTER */
 async function registerHash() {
-  if (!walletAddr) { alert('Сначала подключите MetaMask'); return; }
-  if (!currentHash) { alert('Выберите файл для хеша'); return; }
-
-  const title  = document.getElementById('r-title').value.trim()  || 'Untitled';
-  const author = document.getElementById('r-author').value.trim() || 'Unknown';
+  const title  = document.getElementById('r-title').value.trim();
+  const author = document.getElementById('r-author').value.trim();
   const regid  = document.getElementById('r-regid').value.trim();
+  if (!title || !author) { showStatus('reg-status','err','✗ Заполните название и автора'); return; }
 
-  await switchChain();
+  await ensureSepolia();
 
-  /* Payload: только хеш + метаданные в hex.
-     Отправляем на нулевой адрес (burn address) — стандартная практика
-     для on-chain timestamp. Polygon и Sepolia принимают data на него. */
-  const payload = JSON.stringify({
-    app: 'HashChain',
-    v: '2',
-    hash: currentHash,
-    title, author, regid,
-    ts: Date.now()
-  });
-  const hexData = '0x' + Array.from(new TextEncoder().encode(payload))
-    .map(b => b.toString(16).padStart(2,'0')).join('');
+  const payload = JSON.stringify({ app:'HashChain', v:'2', hash:fileHash, title, author, regid, ts:Date.now() });
+  const bytes   = new TextEncoder().encode(payload);
+  const hexData = '0x' + Array.from(bytes).map(b => b.toString(16).padStart(2,'0')).join('');
 
-  /* Gas: 21000 (base) + 68 per non-zero byte of data */
-  const dataBytes = new TextEncoder().encode(payload);
-  const gasNeeded = 21000 + dataBytes.reduce((acc, b) => acc + (b === 0 ? 4 : 68), 0);
-  const gasHex = '0x' + Math.ceil(gasNeeded * 1.2).toString(16); /* +20% запас */
+  /* EIP-2028: 16 gas за ненулевой байт, 4 за нулевой */
+  const gasEst = 21000 + Array.from(bytes).reduce((a, b) => a + (b === 0 ? 4 : 16), 0);
+  const gasHex = '0x' + Math.ceil(gasEst * 1.3).toString(16);
 
-  /* Нулевой адрес — публичный, неизменяемый, принимает любые данные */
-  const BURN = '0x0000000000000000000000000000000000000000';
-
-  showStatus('reg-status', 'pending', '⏳ Ожидание подтверждения в MetaMask...');
-  document.getElementById('btn-register').classList.add('loading');
-  document.getElementById('btn-register').disabled = true;
+  const btn = document.getElementById('btn-reg');
+  btn.disabled = true; btn.classList.add('loading');
+  showStatus('reg-status','pending','⏳ Подтвердите транзакцию в MetaMask...');
 
   try {
     const txHash = await window.ethereum.request({
       method: 'eth_sendTransaction',
-      params: [{
-        from: walletAddr,
-        to: BURN,
-        value: '0x0',
-        gas: gasHex,
-        data: hexData
-      }]
+      params: [{ from: wallet, to: BURN_ADDR, value: '0x0', gas: gasHex, data: hexData }]
     });
 
-    const explorer = NETWORKS[currentNet].explorer + txHash;
-    showStatus('reg-status', 'success',
-      `✓ Транзакция отправлена!\n\nTX Hash:\n${txHash}\n\n<a href="${explorer}" target="_blank">Открыть в эксплорере ↗</a>`
+    const url = EXPLORER + txHash;
+    showStatus('reg-status','ok',
+      `✓ Готово! Хеш записан в блокчейн.\n\nTX Hash:\n${txHash}\n\n` +
+      `<a href="${url}" target="_blank">Открыть в Etherscan ↗</a>\n\n` +
+      `Статус "confirmed" появится через ~15 секунд.`
     );
-
-    /* Показать для экспорта в сертификат */
     document.getElementById('export-txid').textContent = txHash;
-    document.getElementById('export-note').style.display = 'block';
+    document.getElementById('export-link').href = url;
+    document.getElementById('export-box').classList.add('show');
 
-    /* Сохранить в историю */
-    saveHistory({
-      txHash, title, author, regid,
-      fileHash: currentHash,
-      network: currentNet,
-      date: new Date().toISOString(),
-      explorer
-    });
+    saveHist({ txHash, title, author, regid, fileHash, date: new Date().toISOString() });
 
   } catch (e) {
-    const msg = e.message || JSON.stringify(e);
-    let friendly = msg;
-    if (msg.includes('rejected') || msg.includes('denied') || e.code === 4001)
-      friendly = 'Транзакция отменена пользователем.';
-    else if (msg.includes('insufficient funds') || msg.includes('insufficient fee'))
-      friendly = `Недостаточно ${NETWORKS[currentNet].symbol} для оплаты gas.\nПолучите тестовые монеты через faucet (ссылка выше).`;
-    else if (msg.includes('internal') || msg.includes('data'))
-      friendly = 'Сеть отклонила транзакцию с данными.\nПопробуйте переключиться на Sepolia Testnet.';
-    showStatus('reg-status', 'error', '✗ ' + friendly);
+    const m = e.message || '';
+    let msg = '✗ ' + m;
+    if (e.code === 4001 || m.includes('rejected') || m.includes('denied'))
+      msg = '✗ Транзакция отменена.';
+    else if (m.includes('insufficient') || m.includes('funds') || m.includes('fee'))
+      msg = '✗ Недостаточно ETH для gas.\nПолучите тестовый ETH через один из faucet-ов выше.';
+    else if (m.includes('nonce'))
+      msg = '✗ Конфликт nonce — подождите завершения предыдущей транзакции.';
+    showStatus('reg-status','err', msg);
   }
 
-  document.getElementById('btn-register').classList.remove('loading');
-  document.getElementById('btn-register').disabled = false;
+  btn.disabled = false; btn.classList.remove('loading');
 }
 
-/* ══ VERIFY ══ */
+/* VERIFY */
 async function verifyHash() {
-  const txInput = document.getElementById('v-txhash').value.trim();
-  const result  = document.getElementById('verify-result');
-  const match   = document.getElementById('verify-match');
-  result.classList.add('show');
+  const txIn = document.getElementById('v-tx').value.trim();
+  const out  = document.getElementById('ver-out');
+  const card = document.getElementById('ver-card');
+  out.classList.add('show');
 
-  if (!currentHashV) { match.className = 'verify-match fail'; match.textContent = '✗ Загрузите файл для проверки'; return; }
-
-  /* Ищем в локальной истории */
-  const history = getHistory();
-  let found = null;
-
-  if (txInput) {
-    found = history.find(h => h.txHash.toLowerCase() === txInput.toLowerCase());
-  }
-  if (!found) {
-    found = history.find(h => h.fileHash.toUpperCase() === currentHashV.toUpperCase());
-  }
+  const hist  = getHist();
+  let found   = txIn ? hist.find(h => h.txHash.toLowerCase() === txIn.toLowerCase()) : null;
+  if (!found) found = hist.find(h => h.fileHash.toUpperCase() === fileHashV.toUpperCase());
 
   if (found) {
-    if (found.fileHash.toUpperCase() === currentHashV.toUpperCase()) {
-      match.className = 'verify-match ok';
-      match.innerHTML =
+    if (found.fileHash.toUpperCase() === fileHashV.toUpperCase()) {
+      card.className = 'verify-card ok';
+      card.innerHTML =
         `✓ ФАЙЛ ПОДТВЕРЖДЁН\n\n` +
-        `Работа: ${found.title}\nАвтор: ${found.author}\n` +
-        `Дата регистрации: ${new Date(found.date).toLocaleString('ru')}\n` +
-        `Сеть: ${found.network === 'polygon' ? 'Polygon' : 'Sepolia'}\n` +
-        `TX: <a href="${found.explorer}" target="_blank" style="color:inherit;">${found.txHash.slice(0,18)}...↗</a>`;
+        `Работа:  ${found.title}\nАвтор:   ${found.author}\n` +
+        `Дата:    ${new Date(found.date).toLocaleString('ru')}\n` +
+        `TX Hash: ${found.txHash}\n\n` +
+        `<a href="${EXPLORER}${found.txHash}" target="_blank">Открыть в Etherscan ↗</a>`;
     } else {
-      match.className = 'verify-match fail';
-      match.innerHTML = '✗ НЕСОВПАДЕНИЕ\n\nТранзакция найдена, но хеш файла не совпадает.\nФайл был изменён или это другой файл.';
+      card.className = 'verify-card err';
+      card.textContent = '✗ НЕСОВПАДЕНИЕ\n\nТранзакция найдена, но хеш файла не совпадает.\nФайл был изменён после регистрации.';
     }
   } else {
-    match.className = 'verify-match fail';
-    match.innerHTML = '⚠ Не найдено в локальной истории.\n\nЕсли транзакция была сделана на другом устройстве,\nпроверьте TX Hash напрямую в эксплорере.';
-    if (txInput) {
-      const cfg = NETWORKS[currentNet];
-      match.innerHTML += `\n<a href="${cfg.explorer}${txInput}" target="_blank" style="color:inherit;">Открыть ${txInput.slice(0,10)}... ↗</a>`;
-    }
+    card.className = 'verify-card err';
+    card.innerHTML = '⚠ Не найдено в локальной истории.' +
+      (txIn ? `\n\nПроверьте напрямую в Etherscan:\n<a href="${EXPLORER}${txIn}" target="_blank">${txIn.slice(0,22)}... ↗</a>` :
+              '\n\nВведите TX Hash для прямой проверки через Etherscan.');
   }
 }
 
-/* ══ HISTORY ══ */
-const HIST_KEY = 'hashchain_history';
-function getHistory() { try { return JSON.parse(localStorage.getItem(HIST_KEY) || '[]'); } catch { return []; } }
-function saveHistory(entry) {
-  const h = getHistory();
-  h.unshift(entry);
-  localStorage.setItem(HIST_KEY, JSON.stringify(h.slice(0, 100)));
-  renderHistory();
+/* HISTORY */
+function getHist() { try { return JSON.parse(localStorage.getItem(HIST_KEY)||'[]'); } catch { return []; } }
+function saveHist(e) {
+  const h = getHist(); h.unshift(e);
+  localStorage.setItem(HIST_KEY, JSON.stringify(h.slice(0,200)));
+  if (document.getElementById('tab-his').style.display !== 'none') renderHist();
 }
 
-function renderHistory() {
-  const list = document.getElementById('history-list');
-  const h = getHistory();
-  if (!h.length) {
-    list.innerHTML = '<div class="history-empty">История пуста — зарегистрируйте первую работу</div>';
-    return;
-  }
-  list.innerHTML = h.map((item, i) => `
+function renderHist() {
+  const list = document.getElementById('his-list');
+  const h = getHist();
+  if (!h.length) { list.innerHTML = '<div class="empty">История пуста — зарегистрируйте первую работу</div>'; return; }
+  list.innerHTML = h.map((item,i) => `
     <div class="tx-item">
-      <div class="tx-top">
+      <div class="tx-row">
         <div class="tx-name">${item.title}</div>
-        <div class="tx-date">${new Date(item.date).toLocaleDateString('ru', {day:'2-digit',month:'short',year:'numeric'})}</div>
+        <div class="tx-date">${new Date(item.date).toLocaleDateString('ru',{day:'2-digit',month:'short',year:'numeric'})}</div>
       </div>
-      <div class="tx-hash">TX: <span>${item.txHash}</span></div>
-      <div class="tx-hash" style="font-size:9px;">File hash: <span style="color:var(--muted)">${item.fileHash.slice(0,32)}...</span></div>
-      <div class="tx-badges">
-        <span class="badge ${item.network === 'polygon' ? 'poly' : 'sep'}">${item.network === 'polygon' ? 'Polygon' : 'Sepolia'}</span>
-        <span class="badge confirmed">✓ Отправлена</span>
-        ${item.author ? `<span class="badge" style="background:var(--surface2);border:1px solid var(--border2);color:var(--muted);">${item.author}</span>` : ''}
+      ${item.author?`<div class="tx-detail">Автор: <span>${item.author}</span></div>`:''}
+      <div class="tx-detail">TX: <span>${item.txHash}</span></div>
+      <div class="tx-detail">Hash: <span>${item.fileHash.slice(0,32)}…</span></div>
+      <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;">
+        <span class="badge">Sepolia</span><span class="badge ok">✓ Отправлена</span>
       </div>
-      <div class="tx-actions">
-        <a href="${item.explorer}" target="_blank"><button class="btn-small">Открыть в эксплорере ↗</button></a>
-        <button class="btn-small" onclick="copyTx('${item.txHash}')">Копировать TX</button>
-        <button class="btn-small danger" onclick="deleteHistory(${i})">Удалить</button>
+      <div class="tx-acts">
+        <a href="${EXPLORER}${item.txHash}" target="_blank"><button class="btn-sm">Etherscan ↗</button></a>
+        <button class="btn-sm" onclick="navigator.clipboard.writeText('${item.txHash}')">Копировать TX</button>
+        <button class="btn-sm" onclick="navigator.clipboard.writeText('${item.fileHash}')">Копировать Hash</button>
+        <button class="btn-sm red" onclick="delHist(${i})">Удалить</button>
       </div>
-    </div>
-  `).join('');
+    </div>`).join('');
 }
 
-function deleteHistory(i) {
-  const h = getHistory();
-  h.splice(i, 1);
-  localStorage.setItem(HIST_KEY, JSON.stringify(h));
-  renderHistory();
+function delHist(i) {
+  const h = getHist(); h.splice(i,1);
+  localStorage.setItem(HIST_KEY, JSON.stringify(h)); renderHist();
 }
 
-function copyTx(tx) {
-  navigator.clipboard.writeText(tx);
-}
-
-/* ══ TABS ══ */
+/* TABS */
 function showTab(name) {
-  ['register','verify','history'].forEach(t => {
-    document.getElementById('tab-' + t).style.display = t === name ? 'block' : 'none';
-    document.querySelectorAll('.tab')[['register','verify','history'].indexOf(t)].classList.toggle('active', t === name);
+  ['reg','ver','his'].forEach((t,i) => {
+    document.getElementById('tab-'+t).style.display = t===name?'block':'none';
+    document.querySelectorAll('.tab')[i].classList.toggle('on', t===name);
   });
-  if (name === 'history') renderHistory();
+  if (name==='his') renderHist();
 }
 
-/* ══ STATUS ══ */
+/* STATUS */
 function showStatus(id, type, msg) {
   const el = document.getElementById(id);
-  el.className = `status-box ${type} show`;
-  el.innerHTML = msg.replace(/\n/g, '<br>');
+  el.className = `status ${type} show`;
+  el.innerHTML = msg.replace(/\n/g,'<br>');
 }
 
-/* ══ INIT ══ */
-switchNet('polygon');
-renderHistory();
+/* INIT */
 if (window.ethereum) {
-  window.ethereum.request({ method: 'eth_accounts' }).then(a => {
-    if (a.length) { walletAddr = a[0]; updateWalletUI(); }
-  });
+  window.ethereum.request({method:'eth_accounts'}).then(a => { if(a.length){wallet=a[0];setWalletUI(a[0]);} });
   window.ethereum.on('accountsChanged', a => {
-    walletAddr = a[0] || null;
-    updateWalletUI();
-    if (!walletAddr) {
-      document.getElementById('wallet-display').textContent = 'MetaMask не подключён';
-      document.getElementById('wallet-display').className = 'wallet-addr';
-      document.getElementById('btn-connect').textContent = 'Подключить MetaMask';
-      document.getElementById('btn-connect').className = 'btn-connect';
+    wallet = a[0]||null;
+    if (wallet) { setWalletUI(wallet); }
+    else {
+      document.getElementById('w-addr').textContent = 'Не подключён';
+      document.getElementById('w-addr').className = 'wallet-addr';
+      const b = document.getElementById('btn-mm');
+      b.textContent='Подключить'; b.className='btn-mm';
+      checkReady();
     }
   });
+  window.ethereum.on('chainChanged', ()=>location.reload());
 }
 </script>
 </body>
