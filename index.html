@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Elite Copyright Registry | Avatiah</title>
+    <title>Elite Copyright Registry | BG IP Control</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         :root {
@@ -82,12 +82,12 @@
 <body>
 
 <div id="auth-overlay">
-    <h1 style="background: var(--gold); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">AVATIAH SECURE</h1>
+    <h1 style="background: var(--gold); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">BG SECURE ACCESS</h1>
     <input type="password" id="pass" placeholder="PIN CODE" onkeypress="if(event.key==='Enter') unlock()">
 </div>
 
 <div class="admin-panel">
-    <h2 style="color: #aa771c;">Editor Pro</h2>
+    <h2 style="color: #aa771c;">BG IP Control Editor</h2>
     <input type="text" id="inID" placeholder="Registration ID" oninput="sync()">
     <input type="text" id="inName" placeholder="Legal Owner" oninput="sync()">
     <input type="text" id="inTitle" placeholder="Work Title" oninput="sync()">
@@ -144,7 +144,7 @@
                 </div>
                 <div style="font-size: 9pt; text-align: right; color: #666; line-height: 1.4;">
                     Encryption: AES-256 / SHA-256<br>
-                    Verified by Аватиах IP Control
+                    Verified by BG IP Control
                 </div>
             </div>
         </div>
@@ -170,7 +170,6 @@
         }
     }
 
-    // Client View Logic
     const urlVars = new URLSearchParams(window.location.search);
     if(urlVars.get('view')) {
         document.getElementById('auth-overlay').style.display = 'none';
@@ -210,7 +209,6 @@
 
     async function finalizeCertificate() {
         document.getElementById('tsa-tag').style.display = 'block';
-        // TSA Binding via WorldTimeAPI (Trusted Source)
         try {
             const res = await fetch('https://worldtimeapi.org/api/timezone/Asia/Jerusalem');
             const data = await res.json();
@@ -221,7 +219,7 @@
 
         const element = document.getElementById('certificate-render');
         html2pdf().set({
-            margin: 0, filename: 'Avatiah_Copyright.pdf',
+            margin: 0, filename: 'BG_Copyright_Certificate.pdf',
             image: { type: 'jpeg', quality: 1 },
             html2canvas: { scale: 3, useCORS: true },
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
