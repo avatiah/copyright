@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BG IP Control | Certified System v3.1</title>
+    
+    <!-- Подключение профессиональных шрифтов -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    
+    <style>
+        :root {
+            --gold-primary: #c5a059;
+            --gold-gradient: linear-gradient(135deg, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c);
+            --deep-blue: #0f172a;
+            --text-dark: #1e293b;
+            --bg-panel: #1e293b;
+            --error-red: #ef4444;
+        }
+
+        body { 
+            font-family: 'Lato', sans-serif; 
+            margin: 0; 
+            display: flex; 
+            background: #e2e8f0; 
+            height: 100vh; 
+            overflow: hidden; 
+        }
+
+        /* Вход */
+        #auth-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: var(--deep-blue);
+            z-index: 9999; display: flex; justify-content: center; align-items: center; flex-direction: column; 
+            color: white; transition: opacity 0.5s ease;
+        }
+        #auth-overlay input { 
+            padding: 15px; border-radius: 4px; border: 2px solid var(--gold-primary); 
+            background: rgba(255,255,255,0.05); color: #fff; text-align: center; 
+            font-size: 1.5rem; width: 220px; letter-spacing: 2px; outline: none;
+            font-family: 'Cinzel', serif;
+        }
+
+        /* Панель управления */
+        .admin-sidebar { 
+            width: 340px; background: var(--bg-panel); color: #cbd5e1; padding: 25px; 
+            display: flex; flex-direction: column; gap: 15px; 
+            box-shadow: 4px 0 15px rgba(0,0,0,0.2); z-index: 100;
+        }
+        .admin-sidebar h2 {
+            font-family: 'Cinzel', serif; color: var(--gold-primary); border-bottom: 1px solid #334155; padding-bottom: 15px;
+        }
+        .admin-sidebar input { 
+            background: #0f172a; color: white; border: 1px solid #334155; 
+            padding: 12px; border-radius: 4px; width: 100%; box-sizing: border-box; 
+            font-family: 'Lato', sans-serif; transition: border-color 0.3s;
+        }
+        .admin-sidebar input:focus { border-color: var(--gold-primary); outline: none; }
+        .admin-sidebar input.error { border-color: var(--error-red); animation: shake 0.3s; }
+
+        .btn { 
+            border: none; padding: 14px; font-weight: bold; cursor: pointer; 
+            border-radius: 4px; text-transform: uppercase; width: 100%; 
+            text-align: center; text-decoration: none; color: white; margin-top: 5px; 
+            font-size: 0.9rem; letter-spacing: 1px; transition: transform 0.1s, opacity 0.2s;
+        }
+        .btn:active { transform: scale(0.98); }
+        .btn-gold { background: var(--gold-gradient); color: #2c1d00; font-weight: 800; }
+        .btn-blue { background: #3b82f6; }
+        .btn-blue:hover { background: #2563eb; }
+        .btn-red { background: #ef4444; }
+        
+        .file-upload-wrap {
+            position: relative; overflow: hidden; display: inline-block; width: 100%;
+        }
+        .file-upload-label {
+            display: block; padding: 10px; background: #334155; color: #fff; 
+            text-align: center; border-radius: 4px; cursor: pointer; font-size: 0.85rem;
+        }
+        .file-upload-label:hover { background: #475569; }
+        input[type=file] { font-size: 100px; position: absolute; left: 0; top: 0; opacity: 0; }
+
+        .viewport { flex: 1; display: flex; justify-content: center; align-items: center; padding: 40px; overflow: auto; background-image: radial-gradient(#cbd5e1 1px, transparent 1px); background-size: 20px 20px; }
+
+        /* Дизайн Сертификата A4 */
+        #certificate-render {
+            width: 210mm; height: 297mm; background: #fff; position: relative;
+            box-sizing: border-box; display: flex; flex-direction: column;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.15); 
+        }
+
+        /* Золотая рамка с двойным контуром */
+        .gold-inner-frame { 
+            margin: 10mm; border: 3px solid var(--gold-primary); 
+            padding: 3px; height: calc(100% - 20mm); position: relative;
+        }
+        .gold-inner-frame::after {
+            content: ''; position: absolute; top: 3px; left: 3px; right: 3px; bottom: 3px;
+            border: 1px solid var(--gold-primary); pointer-events: none;
+        }
+        
+        .cert-content { padding: 10mm 15mm; height: 100%; display: flex; flex-direction: column; position: relative; }
+
+        .cert-header { text-align: center; margin-bottom: 40px; margin-top: 20px; }
+        .cert-header h1 { 
+            font-family: 'Cinzel', serif; font-size: 38pt; margin: 0; 
+            color: var(--deep-blue); letter-spacing: 2px; 
+        }
+        .cert-header .sub-title { 
+            font-family: 'Cinzel', serif; font-size: 14pt; letter-spacing: 6px; 
+            color: var(--gold-primary); font-weight: 700; margin-top: 10px; text-transform: uppercase;
+        }
+        .divider-line { width: 100px; height: 3px; background: var(--gold-primary); margin: 20px auto; }
+
+        .cert-body { flex-grow: 1; font-family: 'Lato', sans-serif; }
+        .data-field { margin-bottom: 30px; position: relative; }
+        .f-label { 
+            font-size: 10pt; color: #64748b; text-transform: uppercase; 
+            letter-spacing: 1.5px; font-weight: 700; display: block; margin-bottom: 5px;
+        }
+        .f-value { 
+            font-size: 20pt; color: var(--text-dark); font-weight: 400; 
+            border-bottom: 1px solid #cbd5e1; display: block; padding: 5px 0; 
+            font-family: 'Cinzel', serif; min-height: 24pt;
+        }
+
+        #hash-display { 
+            background: #f8fafc; padding: 15px; font-family: monospace; font-size: 9pt; 
+            border-left: 4px solid var(--gold-primary); margin-top: 30px; 
+            color: #475569; line-height: 1.5;
+        }
+
+        /* Мета-информация */
+        .meta-top { position: absolute; top: 15mm; right: 15mm; text-align: right; }
+        #qrcode { background: #fff; padding: 5px; border: 1px solid #eee; display: inline-block; }
+        .tsa-tag { 
+            color: #059669; font-weight: bold; font-size: 9pt; 
+            border: 1px solid #059669; padding: 4px 8px; margin-top: 8px; display: inline-block;
+            background: #ecfdf5; border-radius: 4px;
+        }
+
+        /* Футер и Печать */
+        .cert-footer { display: flex; justify-content: space-between; align-items: flex-end; margin-top: auto; padding-top: 20px; }
+        .issuer-info { font-size: 9pt; color: #94a3b8; line-height: 1.6; font-style: italic; }
+        
+        .official-seal-wrap { text-align: center; width: 180px; position: relative; }
+        .seal-img { 
+            width: 140px; height: auto; display: block; margin: 0 auto 5px auto; 
+            /* Эффект наложения печати */
+            mix-blend-mode: multiply; opacity: 0.9;
+        }
+        .signature-line { 
+            border-top: 1px solid var(--deep-blue); width: 100%; margin-top: 5px; 
+            font-size: 10pt; font-weight: bold; color: var(--deep-blue); padding-top: 5px;
+        }
+
+        @keyframes shake {
+            0% { transform: translateX(0); } 25% { transform: translateX(-5px); } 50% { transform: translateX(5px); } 75% { transform: translateX(-5px); } 100% { transform: translateX(0); }
+        }
+
+        body.mode-view .admin-sidebar { display: none !important; }
+        body.mode-view .viewport { background: #fff; padding: 0; }
+        body.mode-view #certificate-render { box-shadow: none; }
+    </style>
+</head>
+<body>
+
+<div id="auth-overlay">
+    <h1 style="font-family: 'Cinzel', serif; color: var(--gold-primary); margin-bottom: 30px; letter-spacing: 3px;">BG RESTRICTED ACCESS</h1>
+    <input type="password" id="pin" placeholder="ENTER PIN" onkeypress="if(event.key==='Enter') unlock()">
+</div>
+
+<div class="admin-sidebar" id="sidebar">
+    <h2>BG IP Registry</h2>
+    
+    <label class="f-label" style="color:#94a3b8; font-size: 0.8rem;">Registry Number</label>
+    <input type="text" id="in-id" placeholder="e.g. BG-2026-001" oninput="sync(this)">
+    
+    <label class="f-label" style="color:#94a3b8; font-size: 0.8rem;">Proprietor Name</label>
+    <input type="text" id="in-name" placeholder="Full Legal Name" oninput="sync(this)">
+    
+    <label class="f-label" style="color:#94a3b8; font-size: 0.8rem;">Asset Description</label>
+    <input type="text" id="in-title" placeholder="Title of Intellectual Property" oninput="sync(this)">
+    
+    <div style="margin-top: 10px;">
+        <label class="f-label" style="color:#94a3b8; font-size: 0.8rem;">Digital Fingerprint (SHA-256)</label>
+        <div class="file-upload-wrap">
+            <label class="file-upload-label">SELECT FILE TO HASH</label>
+            <input type="file" onchange="generateFileHash(this)">
+        </div>
+    </div>
+    
+    <div style="flex-grow: 1;"></div> <!-- Spacer -->
+
+    <button class="btn btn-gold" onclick="validateAndIssue()">ISSUE CERTIFICATE (PDF)</button>
+    <button class="btn btn-blue" onclick="copyVerificationLink()">COPY VERIFICATION LINK</button>
+    <a id="mail-link" href="#" class="btn btn-red" onclick="prepareEmail()">SEND VIA EMAIL</a>
+</div>
+
+<div class="viewport">
+    <div id="certificate-render">
+        <div class="gold-inner-frame">
+            <div class="cert-content">
+                
+                <div class="meta-top">
+                    <div id="qrcode"></div>
+                    <div class="tsa-tag">SECURE TIMESTAMP</div>
+                </div>
+                
+                <div class="cert-header">
+                    <h1>Certificate</h1>
+                    <div class="sub-title">Intellectual Property Rights</div>
+                    <div class="divider-line"></div>
+                </div>
+                
+                <div class="cert-body">
+                    <div class="data-field">
+                        <span class="f-label">Official Registry ID</span>
+                        <span class="f-value" id="out-id">---</span>
+                    </div>
+                    <div class="data-field">
+                        <span class="f-label">Verified Asset Title</span>
+                        <span class="f-value" id="out-title">---</span>
+                    </div>
+                    <div class="data-field">
+                        <span class="f-label">Legal Proprietor</span>
+                        <span class="f-value" id="out-name">---</span>
+                    </div>
+                    <div class="data-field">
+                        <span class="f-label">Certified TimeStamp (RFC 3161)</span>
+                        <span class="f-value" id="out-date" style="color: #059669; font-size: 16pt;">---</span>
+                    </div>
+
+                    <div id="hash-display">
+                        <strong>SHA-256 DIGITAL FINGERPRINT:</strong><br>
+                        <span id="out-hash" style="word-break: break-all;">PENDING FILE VERIFICATION...</span>
+                    </div>
+                </div>
+                
+                <div class="cert-footer">
+                    <div class="issuer-info">
+                        <strong>Registry Node:</strong> Ashdod / ISRAEL<br>
+                        <strong>Security Protocol:</strong> Blockchain-Backed Architecture<br>
+                        Issuer: BG Digital Archive Infrastructure
+                    </div>
+                    <div class="official-seal-wrap">
+                        <!-- ВАЖНО: Замените src ниже на "signature1.png", когда файл будет рядом -->
+                        <img class="seal-img" id="seal-placeholder" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==" alt="OFFICIAL SEAL">
+                        <div class="signature-line">OFFICIAL BG SEAL</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const PIN_CODE = "8063"; // Ваш код доступа
+
+    function unlock() {
+        if(document.getElementById('pin').value === PIN_CODE) {
+            document.getElementById('auth-overlay').style.opacity = '0';
+            setTimeout(() => { document.getElementById('auth-overlay').style.display = 'none'; }, 500);
+        } else { 
+            alert("Access Denied: Incorrect PIN"); 
+            document.getElementById('pin').value = '';
+        }
+    }
+
+    // Режим просмотра (для получателя ссылки)
+    const urlParams = new URLSearchParams(window.location.search);
+    if(urlParams.get('view')) {
+        document.getElementById('auth-overlay').style.display = 'none';
+        document.body.classList.add('mode-view');
+        
+        document.getElementById('out-id').innerText = urlParams.get('id') || 'N/A';
+        document.getElementById('out-name').innerText = urlParams.get('name') || 'N/A';
+        document.getElementById('out-title').innerText = urlParams.get('title') || 'N/A';
+        document.getElementById('out-hash').innerText = urlParams.get('hash') || 'NO HASH';
+        document.getElementById('out-date').innerText = urlParams.get('date');
+        
+        // Генерация QR для режима просмотра
+        window.onload = () => createQR(window.location.href);
+    }
+
+    function sync(inputElement) {
+        const targetId = inputElement.id.replace('in-', 'out-');
+        const val = inputElement.value.trim();
+        document.getElementById(targetId).innerText = val || '---';
+        
+        // Сброс ошибки при вводе
+        inputElement.classList.remove('error');
+    }
+
+    function validateAndIssue() {
+        const fields = ['in-id', 'in-name', 'in-title'];
+        let isValid = true;
+        
+        fields.forEach(id => {
+            const el = document.getElementById(id);
+            if(!el.value.trim()) {
+                el.classList.add('error');
+                isValid = false;
+            }
+        });
+
+        if(!isValid) {
+            alert("Please fill in all required fields (ID, Name, Title).");
+            return;
+        }
+
+        issueCertificate();
+    }
+
+    function createQR(text) {
+        const qrContainer = document.getElementById("qrcode");
+        qrContainer.innerHTML = ""; 
+        try {
+            new QRCode(qrContainer, {
+                text: text,
+                width: 100,
+                height: 100,
+                colorDark : "#0f172a", // Темно-синий QR под стиль
+                colorLight : "#ffffff",
+                correctLevel : QRCode.CorrectLevel.H
+            });
+        } catch(e) { console.error("QR Generation failed", e); }
+    }
+
+    function getFullLink() {
+        const base = window.location.origin + window.location.pathname;
+        const query = `?view=true` +
+            `&id=${encodeURIComponent(document.getElementById('out-id').innerText)}` +
+            `&name=${encodeURIComponent(document.getElementById('out-name').innerText)}` +
+            `&title=${encodeURIComponent(document.getElementById('out-title').innerText)}` +
+            `&hash=${encodeURIComponent(document.getElementById('out-hash').innerText)}` +
+            `&date=${encodeURIComponent(document.getElementById('out-date').innerText)}`;
+        return base + query;
+    }
+
+    function issueCertificate() {
+        const now = new Date();
+        const dateStr = now.toLocaleString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }) + " UTC";
+        document.getElementById('out-date').innerText = dateStr;
+        
+        // 1. Обновляем QR
+        const link = getFullLink();
+        createQR(link);
+
+        // 2. Ждем отрисовки QR (критично для html2pdf)
+        setTimeout(() => {
+            const element = document.getElementById('certificate-render');
+            
+            // Временно убираем тени для чистого PDF
+            const originalShadow = element.style.boxShadow;
+            element.style.boxShadow = 'none';
+
+            const opt = {
+                margin: 0,
+                filename: `BG_CERT_${document.getElementById('out-id').innerText}.pdf`,
+                image: { type: 'jpeg', quality: 1.0 },
+                html2canvas: { scale: 2, useCORS: true, logging: false },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            html2pdf().set(opt).from(element).save().then(() => {
+                element.style.boxShadow = originalShadow;
+            });
+        }, 600);
+    }
+
+    function copyVerificationLink() {
+        const link = getFullLink();
+        navigator.clipboard.writeText(link).then(() => {
+            alert("Secure Verification Link copied to clipboard.");
+            createQR(link);
+        }).catch(err => {
+            console.error('Failed to copy: ', err);
+        });
+    }
+
+    function prepareEmail() {
+        const subject = `VERIFIED IP RECORD: ${document.getElementById('out-title').innerText}`;
+        const body = `CERTIFICATE OF INTELLECTUAL PROPERTY\n\n` +
+                     `Registry ID: ${document.getElementById('out-id').innerText}\n` +
+                     `Proprietor: ${document.getElementById('out-name').innerText}\n` +
+                     `Date: ${document.getElementById('out-date').innerText}\n\n` +
+                     `Verify authenticity here:\n${getFullLink()}`;
+        
+        document.getElementById('mail-link').href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    }
+
+    async function generateFileHash(input) {
+        if(!input.files[0]) return;
+        const file = input.files[0];
+        const buffer = await file.arrayBuffer();
+        const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
+        
+        const hashEl = document.getElementById('out-hash');
+        hashEl.innerText = hashHex;
+        hashEl.style.color = '#0f172a';
+        hashEl.style.fontWeight = 'bold';
+    }
+</script>
+</body>
+</html>
