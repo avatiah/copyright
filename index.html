@@ -50,7 +50,6 @@
         .content-area { flex-grow: 1; font-size: 16pt; color: #1a1a1a; text-align: center; line-height: 1.6; }
         .data-box { display: block; font-weight: bold; border-bottom: 1px solid var(--panel-border); margin: 5px auto 12px; width: 85%; padding: 5px; color: #000; min-height: 1.2em; }
 
-        /* QR Code Wrapper - High enough to not overlap anything */
         #qrcode-wrapper {
             position: absolute; bottom: 65mm; right: 25mm;
             display: none; flex-direction: column; align-items: center; gap: 5px; z-index: 50;
@@ -122,11 +121,12 @@
 
 <script>
     const MASTER_PIN = "8063";
+    let activeSig = localStorage.getItem('bg_sig') || "";
 
     function unlockAdmin() {
         if(document.getElementById('pass').value === MASTER_PIN) {
             document.getElementById('auth-overlay').style.display = 'none';
-            applySignature();
+            if(activeSig) applySignature(activeSig);
         } else { alert("Access Denied"); }
     }
 
@@ -142,7 +142,10 @@
         document.getElementById('tsa-tag').style.display = 'block';
         document.getElementById('qrcode-wrapper').style.display = 'flex';
         
-        applySignature(); // Берем подпись из памяти браузера
+        // КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ: Получение подписи из URL
+        const sigData = urlParams.get('sdata');
+        if(sigData) applySignature(decodeURIComponent(sigData));
+        
         setTimeout(() => createQR(window.location.href), 500);
     }
 
@@ -155,34 +158,33 @@
     function createQR(text) {
         const qrContainer = document.getElementById("qrcode");
         qrContainer.innerHTML = "";
-        try {
-            new QRCode(qrContainer, { text: text, width: 100, height: 100 });
-            document.getElementById('qrcode-wrapper').style.display = 'flex';
-        } catch(e) {
-            console.error("QR Error: Link too long or data error", e);
-        }
+        // Используем более эффективный режим исправления ошибок (L), чтобы вместить больше данных
+        new QRCode(qrContainer, { text: text, width: 110, height: 110, correctLevel: QRCode.CorrectLevel.L });
+        document.getElementById('qrcode-wrapper').style.display = 'flex';
     }
 
     function buildLink() {
         const base = window.location.origin + window.location.pathname;
-        return base + `?view=true&id=${encodeURIComponent(document.getElementById('outID').innerText)}` +
+        let link = base + `?view=true&id=${encodeURIComponent(document.getElementById('outID').innerText)}` +
                       `&name=${encodeURIComponent(document.getElementById('outName').innerText)}` +
                       `&title=${encodeURIComponent(document.getElementById('outTitle').innerText)}` +
                       `&hash=${encodeURIComponent(document.getElementById('outHash').innerText)}` +
                       `&date=${encodeURIComponent(document.getElementById('outDate').innerText)}`;
+        
+        // Если подпись есть, добавляем её (обрезаем мета-данные для экономии места)
+        if(activeSig) {
+            link += `&sdata=${encodeURIComponent(activeSig)}`;
+        }
+        return link;
     }
 
     async function executeFinalization() {
         document.getElementById('tsa-tag').style.display = 'block';
         document.getElementById('outDate').innerText = new Date().toISOString().replace('T', ' ').substring(0, 19) + " UTC";
         createQR(buildLink());
-        
         setTimeout(() => {
-            const element = document.getElementById('certificate-render');
-            html2pdf().from(element).set({
-                margin: 0, filename: 'IP_Certificate.pdf',
-                html2canvas: { scale: 2 },
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            html2pdf().from(document.getElementById('certificate-render')).set({
+                margin: 0, filename: 'IP_Certificate.pdf', html2canvas: { scale: 2 }, jsPDF: { format: 'a4' }
             }).save();
         }, 1000);
     }
@@ -190,14 +192,9 @@
     function generateClientLink() {
         const link = buildLink();
         createQR(link);
-        
-        const el = document.createElement('textarea');
-        el.value = link;
-        document.body.appendChild(el);
-        el.select();
-        document.execCommand('copy');
-        document.body.removeChild(el);
-        alert("Link copied! QR Generated.");
+        const el = document.createElement('textarea'); el.value = link; document.body.appendChild(el); el.select();
+        document.execCommand('copy'); document.body.removeChild(el);
+        alert("Link & Signature encoded in QR!");
     }
 
     function updateMailLink() {
@@ -215,14 +212,24 @@
     function captureSignature(input) {
         const reader = new FileReader();
         reader.onload = (e) => {
-            localStorage.setItem('bg_sig', e.target.result);
-            applySignature();
+            // ОПТИМИЗАЦИЯ: Уменьшаем качество подписи для прохождения через QR
+            const img = new Image();
+            img.onload = function() {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = 150; // Маленький размер для QR
+                canvas.height = 60;
+                ctx.drawImage(img, 0, 0, 150, 60);
+                activeSig = canvas.toDataURL('image/jpeg', 0.5); // Сжатый JPEG
+                localStorage.setItem('bg_sig', activeSig);
+                applySignature(activeSig);
+            };
+            img.src = e.target.result;
         };
         reader.readAsDataURL(input.files[0]);
     }
 
-    function applySignature() {
-        const data = localStorage.getItem('bg_sig');
+    function applySignature(data) {
         if(data) {
             const img = document.getElementById('sig-img');
             img.src = data; img.style.display = 'inline-block';
