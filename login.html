@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BG IP Registry — Secure Access</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600;700&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --gold: #c9a84c;
+            --gold-light: #f0d080;
+            --gold-dark: #8a6520;
+            --ink: #0a0a0c;
+            --panel: #0f0f12;
+            --surface: #16161c;
+            --border: #2a2a35;
+            --text-dim: #666680;
+            --text-mid: #a0a0b8;
+            --red: #c0392b;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background: var(--ink);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Фоновая сетка */
+        body::before {
+            content: '';
+            position: fixed; inset: 0;
+            background-image:
+                linear-gradient(rgba(201,168,76,0.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(201,168,76,0.04) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none;
+        }
+
+        /* Угловые декоры */
+        .corner {
+            position: fixed;
+            width: 120px; height: 120px;
+            border-color: var(--gold-dark);
+            border-style: solid;
+            opacity: 0.4;
+        }
+        .corner-tl { top: 30px; left: 30px; border-width: 2px 0 0 2px; }
+        .corner-tr { top: 30px; right: 30px; border-width: 2px 2px 0 0; }
+        .corner-bl { bottom: 30px; left: 30px; border-width: 0 0 2px 2px; }
+        .corner-br { bottom: 30px; right: 30px; border-width: 0 2px 2px 0; }
+
+        .login-box {
+            position: relative;
+            width: 480px;
+            background: var(--panel);
+            border: 1px solid var(--border);
+            padding: 60px 50px 50px;
+            animation: fadeIn 0.6s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Золотая верхняя полоса */
+        .login-box::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, var(--gold), transparent);
+        }
+
+        .login-header { text-align: center; margin-bottom: 45px; }
+
+        /* Герб/логотип */
+        .emblem {
+            width: 70px; height: 70px;
+            border: 2px solid var(--gold-dark);
+            border-radius: 50%;
+            margin: 0 auto 20px;
+            display: flex; align-items: center; justify-content: center;
+            position: relative;
+            background: radial-gradient(circle, #1a1a20 0%, var(--panel) 70%);
+        }
+        .emblem::before {
+            content: '';
+            position: absolute; inset: 4px;
+            border: 1px solid rgba(201,168,76,0.3);
+            border-radius: 50%;
+        }
+        .emblem svg { width: 34px; height: 34px; }
+
+        .login-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 28px;
+            font-weight: 700;
+            color: #e8e8f0;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+        }
+
+        .login-subtitle {
+            font-size: 11px;
+            letter-spacing: 5px;
+            color: var(--gold);
+            text-transform: uppercase;
+            margin-top: 8px;
+            font-weight: 600;
+        }
+
+        .divider {
+            display: flex; align-items: center; gap: 12px;
+            margin: 0 0 35px;
+        }
+        .divider::before, .divider::after {
+            content: ''; flex: 1;
+            height: 1px; background: var(--border);
+        }
+        .divider-diamond {
+            width: 6px; height: 6px;
+            background: var(--gold-dark);
+            transform: rotate(45deg);
+        }
+
+        .field-group { margin-bottom: 20px; }
+        .field-label {
+            font-size: 10px;
+            letter-spacing: 3px;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .field-wrap { position: relative; }
+
+        .field-wrap input {
+            width: 100%;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            color: #e0e0f0;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 15px;
+            font-weight: 500;
+            padding: 14px 18px 14px 48px;
+            outline: none;
+            letter-spacing: 3px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .field-wrap input:focus {
+            border-color: var(--gold-dark);
+            box-shadow: 0 0 0 1px var(--gold-dark), inset 0 0 20px rgba(201,168,76,0.03);
+        }
+
+        .field-icon {
+            position: absolute; left: 16px; top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-dim);
+            pointer-events: none;
+        }
+
+        /* Счётчик попыток */
+        #attempt-indicator {
+            display: flex; gap: 6px; margin-top: 12px; justify-content: flex-end;
+        }
+        .attempt-dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: var(--border);
+            transition: background 0.3s;
+        }
+        .attempt-dot.used { background: var(--red); }
+
+        .btn-login {
+            width: 100%;
+            background: transparent;
+            border: 1px solid var(--gold-dark);
+            color: var(--gold-light);
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 5px;
+            text-transform: uppercase;
+            padding: 16px;
+            cursor: pointer;
+            margin-top: 30px;
+            position: relative;
+            overflow: hidden;
+            transition: color 0.3s, border-color 0.3s;
+        }
+
+        .btn-login::before {
+            content: '';
+            position: absolute; inset: 0;
+            background: linear-gradient(90deg, transparent, rgba(201,168,76,0.1), transparent);
+            transform: translateX(-100%);
+            transition: transform 0.5s ease;
+        }
+        .btn-login:hover { border-color: var(--gold); color: var(--gold); }
+        .btn-login:hover::before { transform: translateX(100%); }
+        .btn-login:active { transform: scale(0.99); }
+        .btn-login:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        #error-msg {
+            font-size: 11px;
+            letter-spacing: 2px;
+            color: var(--red);
+            text-transform: uppercase;
+            text-align: center;
+            margin-top: 15px;
+            min-height: 18px;
+            font-weight: 600;
+            animation: shake 0.4s ease;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-6px); }
+            40%, 80% { transform: translateX(6px); }
+        }
+
+        .login-footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .footer-text {
+            font-size: 9px;
+            letter-spacing: 2px;
+            color: var(--text-dim);
+            text-transform: uppercase;
+        }
+        .status-dot {
+            width: 6px; height: 6px; border-radius: 50%;
+            background: #27ae60;
+            box-shadow: 0 0 6px #27ae60;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        /* Экран блокировки */
+        #lockout-screen {
+            display: none;
+            position: fixed; inset: 0;
+            background: var(--ink);
+            z-index: 10;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 20px;
+            color: var(--red);
+            text-align: center;
+        }
+        #lockout-screen.active { display: flex; }
+        #lockout-screen h2 {
+            font-family: 'Rajdhani', sans-serif;
+            letter-spacing: 8px;
+            font-size: 18px;
+        }
+        #lockout-timer {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 48px;
+            color: var(--gold);
+        }
+
+        /* Loader на кнопке */
+        .spinner {
+            display: none;
+            width: 16px; height: 16px;
+            border: 2px solid rgba(201,168,76,0.3);
+            border-top-color: var(--gold);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .btn-login.loading .spinner { display: inline-block; }
+        .btn-login.loading .btn-text { opacity: 0.6; }
+    </style>
+</head>
+<body>
+
+<div class="corner corner-tl"></div>
+<div class="corner corner-tr"></div>
+<div class="corner corner-bl"></div>
+<div class="corner corner-br"></div>
+
+<div id="lockout-screen">
+    <svg width="50" height="50" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        <line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+    </svg>
+    <h2>ACCESS TEMPORARILY SUSPENDED</h2>
+    <div id="lockout-timer">--:--</div>
+    <div style="font-size:11px; letter-spacing:3px; color: var(--text-dim);">PLEASE WAIT BEFORE RETRY</div>
+</div>
+
+<div class="login-box">
+    <div class="login-header">
+        <div class="emblem">
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.2">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                <polyline points="9 12 11 14 15 10"/>
+            </svg>
+        </div>
+        <div class="login-title">BG IP Registry</div>
+        <div class="login-subtitle">Certified Property Archive</div>
+    </div>
+
+    <div class="divider"><div class="divider-diamond"></div></div>
+
+    <div class="field-group">
+        <label class="field-label" for="pin">Access Credentials</label>
+        <div class="field-wrap">
+            <svg class="field-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+            <input type="password" id="pin" placeholder="· · · · · · · ·"
+                   maxlength="20" autocomplete="off" spellcheck="false"
+                   onkeydown="if(event.key==='Enter') attemptLogin()">
+        </div>
+        <div id="attempt-indicator">
+            <div class="attempt-dot" id="dot-1"></div>
+            <div class="attempt-dot" id="dot-2"></div>
+            <div class="attempt-dot" id="dot-3"></div>
+        </div>
+    </div>
+
+    <button class="btn-login" id="loginBtn" onclick="attemptLogin()">
+        <div class="spinner"></div>
+        <span class="btn-text">Authenticate</span>
+    </button>
+
+    <div id="error-msg"></div>
+
+    <div class="login-footer">
+        <span class="footer-text">Registry Node: Ashdod / IL</span>
+        <div style="display:flex; align-items:center; gap:8px;">
+            <span class="footer-text">System Operational</span>
+            <div class="status-dot"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // === КОНФИГУРАЦИЯ БЕЗОПАСНОСТИ ===
+    // Хэш PIN-кода. PIN = "BG2025" → SHA-256
+    // Для смены PIN: вычислить SHA-256 нового PIN на https://emn178.github.io/online-tools/sha256.html
+    // и заменить значение ниже.
+    const PIN_HASH = "a1d08a3ab3a9b3ea25ad2fedc36bd5398bb2d9adc264f7f1b9c5ee49c67aa73d"; // SHA-256 of "BG2025"
+
+    const MAX_ATTEMPTS = 3;
+    const LOCKOUT_SECONDS = 120;
+
+    async function sha256(msg) {
+        const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(msg));
+        return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+    }
+
+    function getLockoutState() {
+        try {
+            const s = sessionStorage.getItem('bgip_lockout');
+            return s ? JSON.parse(s) : { attempts: 0, lockedUntil: 0 };
+        } catch { return { attempts: 0, lockedUntil: 0 }; }
+    }
+    function setLockoutState(state) {
+        try { sessionStorage.setItem('bgip_lockout', JSON.stringify(state)); } catch {}
+    }
+
+    function updateDots(attempts) {
+        for (let i = 1; i <= 3; i++) {
+            document.getElementById('dot-'+i).classList.toggle('used', i <= attempts);
+        }
+    }
+
+    function showError(msg) {
+        const el = document.getElementById('error-msg');
+        el.textContent = msg;
+        el.style.animation = 'none';
+        void el.offsetWidth;
+        el.style.animation = 'shake 0.4s ease';
+    }
+
+    function startLockoutTimer(until) {
+        document.getElementById('lockout-screen').classList.add('active');
+        const timer = document.getElementById('lockout-timer');
+        const iv = setInterval(() => {
+            const remaining = Math.max(0, Math.ceil((until - Date.now()) / 1000));
+            const m = String(Math.floor(remaining / 60)).padStart(2,'0');
+            const s = String(remaining % 60).padStart(2,'0');
+            timer.textContent = `${m}:${s}`;
+            if (remaining <= 0) {
+                clearInterval(iv);
+                const state = getLockoutState();
+                state.attempts = 0;
+                state.lockedUntil = 0;
+                setLockoutState(state);
+                document.getElementById('lockout-screen').classList.remove('active');
+                updateDots(0);
+            }
+        }, 1000);
+    }
+
+    async function attemptLogin() {
+        const btn = document.getElementById('loginBtn');
+        const state = getLockoutState();
+
+        if (Date.now() < state.lockedUntil) {
+            startLockoutTimer(state.lockedUntil);
+            return;
+        }
+
+        const val = document.getElementById('pin').value.trim();
+        if (!val) { showError('Credentials required'); return; }
+
+        btn.classList.add('loading');
+        btn.disabled = true;
+
+        // Намеренная задержка (анти-брутфорс)
+        await new Promise(r => setTimeout(r, 800 + Math.random() * 400));
+
+        const hash = await sha256(val);
+
+        if (hash === PIN_HASH) {
+            // Успех — сохраняем токен сессии
+            const token = btoa(Date.now() + ':' + Math.random());
+            sessionStorage.setItem('bgip_session', token);
+            setLockoutState({ attempts: 0, lockedUntil: 0 });
+            btn.querySelector('.btn-text').textContent = 'ACCESS GRANTED';
+            btn.style.borderColor = '#27ae60';
+            btn.style.color = '#27ae60';
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 600);
+        } else {
+            state.attempts++;
+            setLockoutState(state);
+            updateDots(state.attempts);
+            btn.classList.remove('loading');
+            btn.disabled = false;
+
+            if (state.attempts >= MAX_ATTEMPTS) {
+                state.lockedUntil = Date.now() + LOCKOUT_SECONDS * 1000;
+                setLockoutState(state);
+                showError('Maximum attempts reached');
+                startLockoutTimer(state.lockedUntil);
+            } else {
+                const left = MAX_ATTEMPTS - state.attempts;
+                showError(`Invalid credentials — ${left} attempt${left>1?'s':''} remaining`);
+                document.getElementById('pin').value = '';
+                document.getElementById('pin').focus();
+            }
+        }
+    }
+
+    // Проверяем, не заблокирован ли уже
+    window.addEventListener('DOMContentLoaded', () => {
+        const state = getLockoutState();
+        updateDots(state.attempts);
+        if (Date.now() < state.lockedUntil) {
+            startLockoutTimer(state.lockedUntil);
+        }
+        document.getElementById('pin').focus();
+    });
+</script>
+</body>
+</html>
