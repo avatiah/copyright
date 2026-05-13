@@ -364,10 +364,10 @@
     // Хэш PIN-кода. PIN = "BG2025" → SHA-256
     // Для смены PIN: вычислить SHA-256 нового PIN на https://emn178.github.io/online-tools/sha256.html
     // и заменить значение ниже.
-    const PIN_HASH = "a1d08a3ab3a9b3ea25ad2fedc36bd5398bb2d9adc264f7f1b9c5ee49c67aa73d"; // SHA-256 of "BG2025"
+    const PIN_HASH = "77a30d500e37cbb9a5b16c6b8d0e4f3dade4bec45f9d62b3805c1f53562814a3"; // SHA-256 of "BG2025"
 
-    const MAX_ATTEMPTS = 10;
-    const LOCKOUT_SECONDS = 10;
+    const MAX_ATTEMPTS = 3;
+    const LOCKOUT_SECONDS = 120;
 
     async function sha256(msg) {
         const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(msg));
