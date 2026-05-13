@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BG IP Control | Certified System v3.3</title>
+    <title>BG IP Control | Certified System v3.4</title>
     
     <!-- Шрифты -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -87,21 +87,21 @@
 
         .viewport { flex: 1; display: flex; justify-content: center; align-items: center; padding: 40px; overflow: auto; background-image: radial-gradient(#cbd5e1 1px, transparent 1px); background-size: 20px 20px; }
 
-        /* Дизайн Сертификата A4 - ОПТИМИЗИРОВАННЫЙ */
+        /* Дизайн Сертификата A4 - ФИНАЛЬНАЯ ОПТИМИЗАЦИЯ */
         #certificate-render {
             width: 210mm; 
-            height: 297mm; /* Строго A4 */
+            height: 297mm; 
             background: #fff; 
             position: relative;
             box-sizing: border-box; 
             display: flex; 
             flex-direction: column;
             box-shadow: 0 20px 50px rgba(0,0,0,0.15); 
-            overflow: hidden; /* Обрезает все лишнее */
+            overflow: hidden;
         }
 
         .gold-inner-frame { 
-            margin: 8mm; /* Уменьшил внешние поля рамки */
+            margin: 8mm; 
             border: 3px solid var(--gold-primary); 
             padding: 2px; 
             height: calc(100% - 16mm); 
@@ -114,7 +114,7 @@
         }
         
         .cert-content { 
-            padding: 8mm 12mm 8mm 12mm; /* Компактные внутренние отступы */
+            padding: 10mm 15mm 10mm 15mm; 
             height: 100%; 
             display: flex; 
             flex-direction: column; 
@@ -122,25 +122,53 @@
             box-sizing: border-box;
         }
 
-        .cert-header { 
-            text-align: center; 
-            margin-bottom: 25px; 
-            margin-top: 5px; 
+        /* Заголовок и QR в одной строке через Flexbox для надежности */
+        .header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 20px;
             position: relative;
-            z-index: 1;
         }
-        .cert-header h1 { 
-            font-family: 'Cinzel', serif; font-size: 34pt; 
+
+        .cert-header-text {
+            text-align: center;
+            flex-grow: 1;
+        }
+        .cert-header-text h1 { 
+            font-family: 'Cinzel', serif; font-size: 32pt; 
             margin: 0; color: var(--deep-blue); letter-spacing: 2px; 
         }
-        .cert-header .sub-title { 
-            font-family: 'Cinzel', serif; font-size: 12pt; letter-spacing: 4px; 
+        .cert-header-text .sub-title { 
+            font-family: 'Cinzel', serif; font-size: 11pt; letter-spacing: 4px; 
             color: var(--gold-primary); font-weight: 700; margin-top: 5px; text-transform: uppercase;
         }
         .divider-line { width: 60px; height: 3px; background: var(--gold-primary); margin: 10px auto; }
 
+        /* Контейнер для QR и штампа */
+        .qr-container {
+            width: 90px;
+            text-align: right;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 5px;
+        }
+        #qrcode-img {
+            width: 80px;
+            height: 80px;
+            border: 1px solid #eee;
+            padding: 2px;
+            background: #fff;
+        }
+        .tsa-tag { 
+            color: #059669; font-weight: bold; font-size: 7pt; 
+            border: 1px solid #059669; padding: 2px 5px; 
+            background: #ecfdf5; border-radius: 2px; text-align: center;
+        }
+
         .cert-body { flex-grow: 1; font-family: 'Lato', sans-serif; }
-        .data-field { margin-bottom: 20px; position: relative; } /* Компактные поля */
+        .data-field { margin-bottom: 18px; position: relative; }
         .f-label { 
             font-size: 8pt; color: #64748b; text-transform: uppercase; 
             letter-spacing: 1.5px; font-weight: 700; display: block; margin-bottom: 2px;
@@ -155,28 +183,6 @@
             background: #f8fafc; padding: 8px; font-family: monospace; font-size: 7pt; 
             border-left: 3px solid var(--gold-primary); margin-top: 15px; 
             color: #475569; line-height: 1.3;
-        }
-
-        /* Мета-информация - СДВИНУТА ВНИЗ ОТ ЗАГОЛОВКА */
-        .meta-top { 
-            position: absolute; 
-            top: 25mm; /* Гарантированный отступ от заголовка */
-            right: 12mm; 
-            text-align: right; 
-            z-index: 10;
-        }
-        #qrcode { 
-            background: #fff; 
-            padding: 2px; 
-            border: 1px solid #eee; 
-            display: inline-block; 
-            width: 70px; 
-            height: 70px;
-        }
-        .tsa-tag { 
-            color: #059669; font-weight: bold; font-size: 7pt; 
-            border: 1px solid #059669; padding: 2px 5px; margin-top: 4px; display: inline-block;
-            background: #ecfdf5; border-radius: 2px;
         }
 
         /* Футер и Печать */
@@ -247,15 +253,18 @@
         <div class="gold-inner-frame">
             <div class="cert-content">
                 
-                <div class="meta-top">
-                    <div id="qrcode"></div>
-                    <div class="tsa-tag">SECURE TIMESTAMP</div>
-                </div>
-                
-                <div class="cert-header">
-                    <h1>Certificate</h1>
-                    <div class="sub-title">Intellectual Property Rights</div>
-                    <div class="divider-line"></div>
+                <!-- Новая структура заголовка и QR -->
+                <div class="header-row">
+                    <div class="cert-header-text">
+                        <h1>Certificate</h1>
+                        <div class="sub-title">Intellectual Property Rights</div>
+                        <div class="divider-line"></div>
+                    </div>
+                    <div class="qr-container">
+                        <!-- Здесь будет изображение QR -->
+                        <img id="qrcode-img" src="" alt="QR Code" style="display:none;">
+                        <div class="tsa-tag">SECURE TIMESTAMP</div>
+                    </div>
                 </div>
                 
                 <div class="cert-body">
@@ -289,7 +298,6 @@
                         Issuer: BG Digital Archive Infrastructure
                     </div>
                     <div class="official-seal-wrap">
-                        <!-- ВАЖНО: Файл signature1.png должен лежать рядом с этим HTML файлом -->
                         <img class="seal-img" id="seal-placeholder" src="signature1.png" alt="OFFICIAL SEAL" onerror="this.style.display='none'">
                         <div class="signature-line">OFFICIAL BG SEAL</div>
                     </div>
@@ -323,7 +331,9 @@
         document.getElementById('out-hash').innerText = urlParams.get('hash') || 'NO HASH';
         document.getElementById('out-date').innerText = urlParams.get('date');
         
-        window.onload = () => createQR(window.location.href);
+        // В режиме просмотра просто показываем ссылку
+        const link = window.location.href;
+        createQRImage(link);
     }
 
     function sync(inputElement) {
@@ -353,19 +363,37 @@
         issueCertificate();
     }
 
-    function createQR(text) {
-        const qrContainer = document.getElementById("qrcode");
-        qrContainer.innerHTML = ""; 
-        try {
-            new QRCode(qrContainer, {
-                text: text,
-                width: 65, /* Еще немного уменьшил для надежности */
-                height: 65,
-                colorDark : "#0f172a",
-                colorLight : "#ffffff",
-                correctLevel : QRCode.CorrectLevel.H
-            });
-        } catch(e) { console.error("QR Generation failed", e); }
+    // Функция создает QR как изображение (Data URL), чтобы html2pdf его корректно захватил
+    function createQRImage(text) {
+        const qrContainer = document.createElement('div');
+        // Временный элемент для генерации
+        new QRCode(qrContainer, {
+            text: text,
+            width: 80,
+            height: 80,
+            colorDark : "#0f172a",
+            colorLight : "#ffffff",
+            correctLevel : QRCode.CorrectLevel.H
+        });
+
+        // Ждем пока QR отрисуется в canvas/img внутри временного контейнера
+        setTimeout(() => {
+            const img = qrContainer.querySelector('img');
+            const canvas = qrContainer.querySelector('canvas');
+            
+            let dataUrl = "";
+            if (img && img.src) {
+                dataUrl = img.src;
+            } else if (canvas) {
+                dataUrl = canvas.toDataURL("image/png");
+            }
+
+            if(dataUrl) {
+                const targetImg = document.getElementById('qrcode-img');
+                targetImg.src = dataUrl;
+                targetImg.style.display = 'block';
+            }
+        }, 100);
     }
 
     function getFullLink() {
@@ -385,42 +413,41 @@
         document.getElementById('out-date').innerText = dateStr;
         
         const link = getFullLink();
-        createQR(link);
+        
+        // Генерируем QR-картинку перед печатью
+        createQRImage(link);
 
-        // Задержка для отрисовки QR
+        // Даем время на отрисовку картинки в DOM
         setTimeout(() => {
             const element = document.getElementById('certificate-render');
             
-            // Настройки для предотвращения второй страницы
             const opt = {
-                margin: [0, 0, 0, 0], // Нулевые отступы PDF
+                margin: [0, 0, 0, 0],
                 filename: `BG_CERT_${document.getElementById('out-id').innerText}.pdf`,
                 image: { type: 'jpeg', quality: 0.98 },
                 html2canvas: { 
                     scale: 2, 
                     useCORS: true, 
                     logging: false,
-                    letterRendering: true,
-                    scrollY: 0 // Важно: сброс прокрутки
+                    scrollY: 0 
                 },
                 jsPDF: { 
                     unit: 'mm', 
                     format: 'a4', 
                     orientation: 'portrait',
-                    compress: true,
-                    hotfixes: ["px_scaling"] // Исправление масштабирования
+                    compress: true
                 }
             };
 
             html2pdf().set(opt).from(element).save();
-        }, 800);
+        }, 600);
     }
 
     function copyVerificationLink() {
         const link = getFullLink();
         navigator.clipboard.writeText(link).then(() => {
             alert("Secure Verification Link copied to clipboard.");
-            createQR(link);
+            createQRImage(link);
         }).catch(err => {
             console.error('Failed to copy: ', err);
         });
