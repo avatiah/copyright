@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>BG IP Control | Final Version</title>
+    <title>BG IP Control | Final Stable</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     
@@ -27,12 +27,11 @@
         }
         .admin-panel input { background: #252525; color: white; border: 1px solid #444; padding: 10px; border-radius: 5px; }
         .btn-main { background: var(--gold); border: none; padding: 14px; font-weight: bold; cursor: pointer; border-radius: 5px; color: #111; text-transform: uppercase; }
-        .btn-url { background: #2980b9; color: white; border: none; padding: 12px; cursor: pointer; border-radius: 5px; font-weight: bold; }
         .btn-gmail { background: #d44638; color: white; border: none; padding: 12px; cursor: pointer; border-radius: 5px; font-weight: bold; text-align: center; text-decoration: none; display: block; }
 
         .preview-viewport { flex: 1; display: flex; justify-content: center; align-items: center; background: #333; overflow: hidden; padding: 10px; }
 
-        /* Фикс PDF: Одна страница А4 */
+        /* Фикс PDF: Строго одна страница */
         #certificate-render {
             width: 210mm; height: 297mm; background: #fff; position: relative;
             box-sizing: border-box; display: flex; flex-direction: column;
@@ -84,9 +83,8 @@
     <input type="file" onchange="captureSignature(this)">
     
     <button class="btn-main" onclick="executeFinalization()">Generate PDF</button>
-    <button class="btn-url" onclick="generateClientLink()">Copy Link</button>
     <hr style="border:0.5px solid #333; width:100%; margin:5px 0;">
-    <a id="gmail-link" href="#" class="btn-gmail" onclick="updateMailLink()">✉ Send to Gmail</a>
+    <a id="gmail-link" href="#" class="btn-gmail" onclick="updateMailLink()">✉ Send via Gmail</a>
 </div>
 
 <div class="preview-viewport">
@@ -104,7 +102,7 @@
                 <span class="data-box" id="outName">---</span>
                 
                 <div style="margin-top: 20px; font-size: 11pt;">
-                    Registry Date: <strong id="outDate">---</strong><br>
+                    Date: <strong id="outDate">---</strong><br>
                     <small style="color: #27ae60; font-weight: bold;">Confirmed by BG IP Control (RFC 3161 TSA Protocol)</small>
                 </div>
 
@@ -130,7 +128,6 @@
         } else { alert("Access Denied"); }
     }
 
-    // Обработка просмотра через ссылку
     const urlParams = new URLSearchParams(window.location.search);
     if(urlParams.get('view')) {
         document.getElementById('auth-overlay').style.display = 'none';
@@ -143,11 +140,10 @@
         document.getElementById('tsa-tag').style.display = 'block';
         document.getElementById('qrcode-wrapper').style.display = 'flex';
         
-        // Гарантируем отрисовку подписи даже в режиме просмотра
-        window.addEventListener('load', drawStoredSignature);
+        // Рендерим подпись при загрузке ссылки
         setTimeout(() => {
-            createQR(window.location.href);
             drawStoredSignature();
+            createQR(window.location.href);
         }, 500);
     }
 
@@ -180,26 +176,20 @@
         }
         createQR(buildLink());
         
-        // Фикс для PDF: предотвращение пустых страниц и смещения
         setTimeout(() => {
             const element = document.getElementById('certificate-render');
             html2pdf().from(element).set({
                 margin: 0,
-                filename: 'IP_Certificate_BG.pdf',
+                filename: 'IP_Certificate.pdf',
                 html2canvas: { scale: 2, useCORS: true, scrollY: 0 },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
             }).save();
         }, 800);
     }
 
-    function generateClientLink() {
-        const l = buildLink(); createQR(l);
-        navigator.clipboard.writeText(l).then(() => alert("Link Copied!"));
-    }
-
     function updateMailLink() {
-        const subj = `IP CERTIFICATE: ${document.getElementById('outTitle').innerText}`;
-        const body = `Digital IP Record for ${document.getElementById('outName').innerText}\nVerified Link: ${buildLink()}`;
+        const subj = `IP RECORD: ${document.getElementById('outTitle').innerText}`;
+        const body = `Verified IP document for ${document.getElementById('outName').innerText}\nLink: ${buildLink()}`;
         document.getElementById('gmail-link').href = `mailto:?subject=${encodeURIComponent(subj)}&body=${encodeURIComponent(body)}`;
     }
 
