@@ -366,8 +366,8 @@
     // и заменить значение ниже.
     const PIN_HASH = "a1d08a3ab3a9b3ea25ad2fedc36bd5398bb2d9adc264f7f1b9c5ee49c67aa73d"; // SHA-256 of "BG2025"
 
-    const MAX_ATTEMPTS = 3;
-    const LOCKOUT_SECONDS = 120;
+    const MAX_ATTEMPTS = 10;
+    const LOCKOUT_SECONDS = 10;
 
     async function sha256(msg) {
         const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(msg));
