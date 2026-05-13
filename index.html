@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>BG IP Control | Final Stable</title>
+    <title>BG IP Control | Link & Signature Fixed</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     
@@ -27,11 +27,11 @@
         }
         .admin-panel input { background: #252525; color: white; border: 1px solid #444; padding: 10px; border-radius: 5px; }
         .btn-main { background: var(--gold); border: none; padding: 14px; font-weight: bold; cursor: pointer; border-radius: 5px; color: #111; text-transform: uppercase; }
+        .btn-url { background: #2980b9; color: white; border: none; padding: 12px; cursor: pointer; border-radius: 5px; font-weight: bold; margin-top: 5px; }
         .btn-gmail { background: #d44638; color: white; border: none; padding: 12px; cursor: pointer; border-radius: 5px; font-weight: bold; text-align: center; text-decoration: none; display: block; }
 
         .preview-viewport { flex: 1; display: flex; justify-content: center; align-items: center; background: #333; overflow: hidden; padding: 10px; }
 
-        /* Фикс PDF: Строго одна страница */
         #certificate-render {
             width: 210mm; height: 297mm; background: #fff; position: relative;
             box-sizing: border-box; display: flex; flex-direction: column;
@@ -79,12 +79,13 @@
     <input type="text" id="inID" placeholder="Registry ID" oninput="syncFields()">
     <input type="text" id="inName" placeholder="Owner Name" oninput="syncFields()">
     <input type="text" id="inTitle" placeholder="Asset Title" oninput="syncFields()">
-    <input type="file" onchange="generateHashFromFile(this)">
-    <input type="file" onchange="captureSignature(this)">
+    <input type="file" id="hashFile" onchange="generateHashFromFile(this)">
+    <input type="file" id="sigFile" onchange="captureSignature(this)">
     
     <button class="btn-main" onclick="executeFinalization()">Generate PDF</button>
+    <button class="btn-url" onclick="generateClientLink()">Copy Link</button>
     <hr style="border:0.5px solid #333; width:100%; margin:5px 0;">
-    <a id="gmail-link" href="#" class="btn-gmail" onclick="updateMailLink()">✉ Send via Gmail</a>
+    <a id="gmail-link" href="#" class="btn-gmail" onclick="updateMailLink()">✉ Send to Gmail</a>
 </div>
 
 <div class="preview-viewport">
@@ -102,7 +103,7 @@
                 <span class="data-box" id="outName">---</span>
                 
                 <div style="margin-top: 20px; font-size: 11pt;">
-                    Date: <strong id="outDate">---</strong><br>
+                    Registry Date: <strong id="outDate">---</strong><br>
                     <small style="color: #27ae60; font-weight: bold;">Confirmed by BG IP Control (RFC 3161 TSA Protocol)</small>
                 </div>
 
@@ -138,11 +139,14 @@
         document.getElementById('outHash').innerText = urlParams.get('hash') || '';
         document.getElementById('outDate').innerText = urlParams.get('date') || '';
         document.getElementById('tsa-tag').style.display = 'block';
-        document.getElementById('qrcode-wrapper').style.display = 'flex';
         
-        // Рендерим подпись при загрузке ссылки
+        // Восстановление подписи из ссылки для посторонних
+        const sigData = urlParams.get('sig');
+        if(sigData) {
+            drawSignatureFromData(decodeURIComponent(sigData));
+        }
+
         setTimeout(() => {
-            drawStoredSignature();
             createQR(window.location.href);
         }, 500);
     }
@@ -162,11 +166,18 @@
 
     function buildLink() {
         const u = window.location.origin + window.location.pathname;
-        return u + `?view=true&id=${encodeURIComponent(document.getElementById('outID').innerText)}` +
+        let link = u + `?view=true&id=${encodeURIComponent(document.getElementById('outID').innerText)}` +
                    `&name=${encodeURIComponent(document.getElementById('outName').innerText)}` +
                    `&title=${encodeURIComponent(document.getElementById('outTitle').innerText)}` +
                    `&hash=${encodeURIComponent(document.getElementById('outHash').innerText)}` +
                    `&date=${encodeURIComponent(document.getElementById('outDate').innerText)}`;
+        
+        // Добавляем саму подпись в ссылку (сжато)
+        const sigData = localStorage.getItem('bg_sig');
+        if(sigData) {
+            link += `&sig=${encodeURIComponent(sigData)}`;
+        }
+        return link;
     }
 
     function executeFinalization() {
@@ -187,9 +198,19 @@
         }, 800);
     }
 
+    function generateClientLink() {
+        const l = buildLink();
+        createQR(l);
+        // Проверка на длину ссылки (подпись делает её длинной)
+        if (l.length > 2000) {
+            alert("Warning: Signature is large. The QR might be complex, but the link is copied!");
+        }
+        navigator.clipboard.writeText(l).then(() => alert("Link Copied to Clipboard!"));
+    }
+
     function updateMailLink() {
         const subj = `IP RECORD: ${document.getElementById('outTitle').innerText}`;
-        const body = `Verified IP document for ${document.getElementById('outName').innerText}\nLink: ${buildLink()}`;
+        const body = `Official IP Document\nLink: ${buildLink()}`;
         document.getElementById('gmail-link').href = `mailto:?subject=${encodeURIComponent(subj)}&body=${encodeURIComponent(body)}`;
     }
 
@@ -211,7 +232,10 @@
 
     function drawStoredSignature() {
         const data = localStorage.getItem('bg_sig');
-        if(!data) return;
+        if(data) drawSignatureFromData(data);
+    }
+
+    function drawSignatureFromData(data) {
         const canvas = document.getElementById('sig-canvas');
         const ctx = canvas.getContext('2d');
         const img = new Image();
