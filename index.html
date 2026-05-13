@@ -50,9 +50,9 @@
         .content-area { flex-grow: 1; font-size: 16pt; color: #1a1a1a; text-align: center; line-height: 1.6; }
         .data-box { display: block; font-weight: bold; border-bottom: 1px solid var(--panel-border); margin: 5px auto 12px; width: 85%; padding: 5px; color: #000; min-height: 1.2em; }
 
-        /* QR Code Wrapper - Moved Higher */
+        /* QR Code Wrapper - High enough to not overlap anything */
         #qrcode-wrapper {
-            position: absolute; bottom: 60mm; right: 25mm;
+            position: absolute; bottom: 65mm; right: 25mm;
             display: none; flex-direction: column; align-items: center; gap: 5px; z-index: 50;
         }
         .qr-label { font-size: 7pt; font-family: sans-serif; color: #888; text-transform: uppercase; }
@@ -122,12 +122,11 @@
 
 <script>
     const MASTER_PIN = "8063";
-    let currentSigData = localStorage.getItem('bg_sig') || "";
 
     function unlockAdmin() {
         if(document.getElementById('pass').value === MASTER_PIN) {
             document.getElementById('auth-overlay').style.display = 'none';
-            applySignature(currentSigData);
+            applySignature();
         } else { alert("Access Denied"); }
     }
 
@@ -135,16 +134,15 @@
     if(urlParams.get('view')) {
         document.getElementById('auth-overlay').style.display = 'none';
         document.body.classList.add('client-mode');
-        document.getElementById('outID').innerText = urlParams.get('id');
-        document.getElementById('outName').innerText = urlParams.get('name');
-        document.getElementById('outTitle').innerText = urlParams.get('title');
-        document.getElementById('outHash').innerText = urlParams.get('hash');
-        document.getElementById('outDate').innerText = urlParams.get('date');
+        document.getElementById('outID').innerText = urlParams.get('id') || '';
+        document.getElementById('outName').innerText = urlParams.get('name') || '';
+        document.getElementById('outTitle').innerText = urlParams.get('title') || '';
+        document.getElementById('outHash').innerText = urlParams.get('hash') || '';
+        document.getElementById('outDate').innerText = urlParams.get('date') || '';
         document.getElementById('tsa-tag').style.display = 'block';
         document.getElementById('qrcode-wrapper').style.display = 'flex';
-        // Load signature from URL parameter if viewing
-        const sigFromUrl = urlParams.get('sig');
-        if(sigFromUrl) applySignature(decodeURIComponent(sigFromUrl));
+        
+        applySignature(); // Берем подпись из памяти браузера
         setTimeout(() => createQR(window.location.href), 500);
     }
 
@@ -157,27 +155,34 @@
     function createQR(text) {
         const qrContainer = document.getElementById("qrcode");
         qrContainer.innerHTML = "";
-        new QRCode(qrContainer, { text: text, width: 90, height: 90 });
-        document.getElementById('qrcode-wrapper').style.display = 'flex';
+        try {
+            new QRCode(qrContainer, { text: text, width: 100, height: 100 });
+            document.getElementById('qrcode-wrapper').style.display = 'flex';
+        } catch(e) {
+            console.error("QR Error: Link too long or data error", e);
+        }
     }
 
     function buildLink() {
         const base = window.location.origin + window.location.pathname;
-        const sigPart = currentSigData ? `&sig=${encodeURIComponent(currentSigData)}` : "";
         return base + `?view=true&id=${encodeURIComponent(document.getElementById('outID').innerText)}` +
                       `&name=${encodeURIComponent(document.getElementById('outName').innerText)}` +
                       `&title=${encodeURIComponent(document.getElementById('outTitle').innerText)}` +
                       `&hash=${encodeURIComponent(document.getElementById('outHash').innerText)}` +
-                      `&date=${encodeURIComponent(document.getElementById('outDate').innerText)}` + sigPart;
+                      `&date=${encodeURIComponent(document.getElementById('outDate').innerText)}`;
     }
 
     async function executeFinalization() {
         document.getElementById('tsa-tag').style.display = 'block';
         document.getElementById('outDate').innerText = new Date().toISOString().replace('T', ' ').substring(0, 19) + " UTC";
         createQR(buildLink());
+        
         setTimeout(() => {
-            html2pdf().from(document.getElementById('certificate-render')).set({
-                margin: 0, filename: 'Certificate.pdf', html2canvas: { scale: 2 }, jsPDF: { format: 'a4' }
+            const element = document.getElementById('certificate-render');
+            html2pdf().from(element).set({
+                margin: 0, filename: 'IP_Certificate.pdf',
+                html2canvas: { scale: 2 },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
             }).save();
         }, 1000);
     }
@@ -185,9 +190,14 @@
     function generateClientLink() {
         const link = buildLink();
         createQR(link);
-        const el = document.createElement('textarea'); el.value = link; document.body.appendChild(el); el.select();
-        document.execCommand('copy'); document.body.removeChild(el);
-        alert("Link copied!");
+        
+        const el = document.createElement('textarea');
+        el.value = link;
+        document.body.appendChild(el);
+        el.select();
+        document.execCommand('copy');
+        document.body.removeChild(el);
+        alert("Link copied! QR Generated.");
     }
 
     function updateMailLink() {
@@ -205,14 +215,14 @@
     function captureSignature(input) {
         const reader = new FileReader();
         reader.onload = (e) => {
-            currentSigData = e.target.result;
-            localStorage.setItem('bg_sig', currentSigData);
-            applySignature(currentSigData);
+            localStorage.setItem('bg_sig', e.target.result);
+            applySignature();
         };
         reader.readAsDataURL(input.files[0]);
     }
 
-    function applySignature(data) {
+    function applySignature() {
+        const data = localStorage.getItem('bg_sig');
         if(data) {
             const img = document.getElementById('sig-img');
             img.src = data; img.style.display = 'inline-block';
