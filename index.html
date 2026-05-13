@@ -3,113 +3,122 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BG IP Registry | Git Commit View</title>
+    <title>BG IP Control | Certified System v6.0</title>
     
     <!-- Шрифты -->
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Lato:wght@300;400;700&family=Fira+Code:wght@400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Lato:wght@300;400;700&family=Fira+Code:wght@500&display=swap" rel="stylesheet">
     
     <style>
         :root {
-            --gold: #c5a059;
-            --dark: #0f172a;
-            --git-green: #2ea44f;
-            --git-gray: #f6f8fa;
-            --border: #d0d7de;
+            --gold-primary: #c5a059;
+            --gold-gradient: linear-gradient(135deg, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c);
+            --deep-blue: #0f172a;
+            --text-dark: #1e293b;
+            --bg-panel: #1e293b;
+            --error-red: #ef4444;
+            --tsa-green: #059669;
         }
 
         body { 
-            font-family: 'Lato', sans-serif; margin: 0; display: flex; 
-            background: #e2e8f0; height: 100vh; overflow: hidden; 
+            font-family: 'Lato', sans-serif; 
+            margin: 0; 
+            display: flex; 
+            background: #e2e8f0; 
+            height: 100vh; 
+            overflow: hidden; 
         }
 
         /* Вход */
         #auth-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: var(--dark); z-index: 9999; 
+            background: var(--deep-blue); z-index: 9999; 
             display: flex; justify-content: center; align-items: center; flex-direction: column; color: white;
         }
         #auth-overlay input { 
-            padding: 15px; border: 2px solid var(--gold); background: rgba(255,255,255,0.1); 
-            color: #fff; text-align: center; font-size: 1.5rem; width: 200px; outline: none;
+            padding: 15px; border: 2px solid var(--gold-primary); background: rgba(255,255,255,0.1); 
+            color: #fff; text-align: center; font-size: 1.5rem; width: 220px; outline: none;
             font-family: 'Cinzel', serif;
         }
 
-        /* Сайдбар */
+        /* Панель управления */
         .sidebar { 
-            width: 320px; background: var(--dark); color: #cbd5e1; padding: 25px; 
+            width: 340px; background: var(--bg-panel); color: #cbd5e1; padding: 25px; 
             display: flex; flex-direction: column; gap: 15px; box-shadow: 4px 0 15px rgba(0,0,0,0.2); z-index: 100;
         }
-        .sidebar h2 { font-family: 'Cinzel', serif; color: var(--gold); margin-top: 0; border-bottom: 1px solid #334155; padding-bottom: 15px; }
+        .sidebar h2 { font-family: 'Cinzel', serif; color: var(--gold-primary); margin-top: 0; border-bottom: 1px solid #334155; padding-bottom: 15px; }
         .sidebar input { 
-            background: #1e293b; color: white; border: 1px solid #334155; padding: 12px; 
+            background: #0f172a; color: white; border: 1px solid #334155; padding: 12px; 
             border-radius: 4px; width: 100%; box-sizing: border-box; font-family: 'Lato', sans-serif;
         }
-        .sidebar input:focus { border-color: var(--gold); outline: none; }
-        .sidebar input.error { border-color: #ef4444; }
+        .sidebar input:focus { border-color: var(--gold-primary); outline: none; }
+        .sidebar input.error { border-color: var(--error-red); }
 
         .btn { 
             border: none; padding: 14px; font-weight: bold; cursor: pointer; border-radius: 4px; 
             text-transform: uppercase; width: 100%; color: white; margin-top: 5px; transition: 0.2s;
             font-size: 0.9rem; letter-spacing: 1px; text-decoration: none; display: block; text-align: center; box-sizing: border-box;
         }
-        .btn-gold { background: linear-gradient(45deg, #bf953f, #fcf6ba, #aa771c); color: #000; }
+        .btn-gold { background: var(--gold-gradient); color: #000; font-weight: 800; }
         .btn-blue { background: #3b82f6; }
         .btn-red { background: #ef4444; }
-        .btn-git { background: #24292f; border: 1px solid rgba(27,31,35,0.15); }
 
         /* Область просмотра */
-        .viewport { flex: 1; display: flex; justify-content: center; align-items: center; padding: 40px; overflow: auto; }
+        .viewport { flex: 1; display: flex; justify-content: center; align-items: center; padding: 40px; overflow: auto; background-image: radial-gradient(#cbd5e1 1px, transparent 1px); background-size: 20px 20px; }
 
-        /* Дизайн документа A4 */
+        /* Дизайн Сертификата A4 */
         #certificate-render {
             width: 210mm; height: 297mm; background: #fff; position: relative;
             box-sizing: border-box; display: flex; flex-direction: column;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2); overflow: hidden;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.15); overflow: hidden;
         }
 
-        .frame { 
-            margin: 10mm; border: 4px double var(--gold); height: calc(100% - 20mm); 
+        .gold-inner-frame { 
+            margin: 10mm; border: 4px double var(--gold-primary); height: calc(100% - 20mm); 
             padding: 8mm; display: flex; flex-direction: column; position: relative; box-sizing: border-box;
         }
 
-        .header-row {
-            display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 25px;
-            border-bottom: 2px solid var(--gold); padding-bottom: 20px;
-        }
-        .cert-header-text h1 { font-family: 'Cinzel', serif; font-size: 32pt; margin: 0; color: var(--dark); }
-        .cert-header-text p { font-family: 'Cinzel', serif; font-size: 11pt; color: var(--gold); letter-spacing: 2px; margin: 5px 0 0 0; text-transform: uppercase; }
-        
-        /* Блок Git Commit */
-        .git-commit-box {
-            background: var(--git-gray); border: 1px solid var(--border); border-radius: 6px;
-            padding: 15px; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-            font-size: 12px; color: #24292f; margin-bottom: 30px;
-        }
-        .git-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        .git-badge { background: #ddf4ff; color: #0969da; padding: 2px 8px; border-radius: 10px; font-weight: 600; font-size: 11px; }
-        .git-hash { font-family: 'Fira Code', monospace; background: #fff; border: 1px solid var(--border); padding: 2px 6px; border-radius: 4px; font-weight: bold; color: #57606a; }
-        .git-meta { color: #57606a; margin-top: 5px; }
-        .git-meta strong { color: #24292f; }
+        .cert-header { text-align: center; margin-bottom: 30px; margin-top: 10px; }
+        .cert-header h1 { font-family: 'Cinzel', serif; font-size: 36pt; margin: 0; color: var(--deep-blue); letter-spacing: 2px; }
+        .cert-header p { font-family: 'Cinzel', serif; font-size: 12pt; color: var(--gold-primary); letter-spacing: 4px; margin: 5px 0 0 0; text-transform: uppercase; font-weight: 700; }
+        .divider-line { width: 80px; height: 3px; background: var(--gold-primary); margin: 15px auto; }
 
-        .body-content { flex-grow: 1; }
-        .field { margin-bottom: 22px; }
-        .label { font-size: 9pt; color: #64748b; text-transform: uppercase; font-weight: 700; display: block; letter-spacing: 1px; }
-        .value { font-size: 18pt; color: var(--dark); font-family: 'Cinzel', serif; border-bottom: 1px solid #ccc; padding: 5px 0; min-height: 24pt; }
+        /* Блок RFC 3161 Timestamp */
+        .tsa-container {
+            display: flex; justify-content: flex-end; margin-bottom: 25px;
+        }
+        .tsa-stamp {
+            border: 2px solid var(--tsa-green); background: #ecfdf5; color: var(--tsa-green);
+            padding: 10px 15px; border-radius: 4px; text-align: right;
+            font-family: 'Fira Code', monospace; font-size: 10pt;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .tsa-label { font-size: 8pt; text-transform: uppercase; font-weight: bold; display: block; margin-bottom: 4px; opacity: 0.8; }
+        .tsa-time { font-size: 12pt; font-weight: bold; }
 
-        .footer { display: flex; justify-content: space-between; align-items: flex-end; margin-top: auto; padding-top: 20px; }
+        .cert-body { flex-grow: 1; font-family: 'Lato', sans-serif; }
+        .data-field { margin-bottom: 25px; }
+        .f-label { font-size: 9pt; color: #64748b; text-transform: uppercase; font-weight: 700; display: block; letter-spacing: 1px; margin-bottom: 5px; }
+        .f-value { font-size: 18pt; color: var(--text-dark); font-family: 'Cinzel', serif; border-bottom: 1px solid #ccc; padding: 5px 0; min-height: 24pt; }
+
+        .hash-display { 
+            background: #f8fafc; padding: 12px; font-family: 'Fira Code', monospace; font-size: 8pt; 
+            border-left: 4px solid var(--gold-primary); margin-top: 20px; word-break: break-all; color: #334155; line-height: 1.4;
+        }
+
+        .cert-footer { display: flex; justify-content: space-between; align-items: flex-end; margin-top: auto; padding-top: 20px; }
         .issuer-info { font-size: 8pt; color: #94a3b8; line-height: 1.4; font-style: italic; }
         
-        .seal-area { text-align: center; width: 150px; }
+        .seal-wrap { text-align: center; width: 150px; }
         .seal-img { width: 120px; height: auto; display: block; margin: 0 auto; mix-blend-mode: multiply; opacity: 0.9; }
-        .seal-line { border-top: 1px solid var(--dark); margin-top: 5px; font-size: 9pt; font-weight: bold; padding-top: 5px; color: var(--dark); }
+        .seal-line { border-top: 1px solid var(--deep-blue); margin-top: 5px; font-size: 9pt; font-weight: bold; padding-top: 5px; color: var(--deep-blue); }
 
-        /* Стили для печати (Скриншот/PDF) */
+        /* Печать */
         @media print {
             body { background: white; height: auto; overflow: visible; }
             .sidebar, #auth-overlay { display: none !important; }
             .viewport { padding: 0; display: block; }
-            #certificate-render { box-shadow: none; width: 100%; height: 100%; page-break-after: always; }
-            .frame { border: 2px solid var(--gold); margin: 0; height: 100vh; }
+            #certificate-render { box-shadow: none; width: 100%; height: 100%; }
+            .gold-inner-frame { border: 2px solid var(--gold-primary); margin: 0; height: 100vh; }
         }
 
         body.mode-view .sidebar { display: none !important; }
@@ -119,16 +128,14 @@
 </head>
 <body>
 
-<!-- Вход -->
 <div id="auth-overlay">
-    <h1 style="font-family: 'Cinzel', serif; color: var(--gold); margin-bottom: 20px;">BG SECURE ACCESS</h1>
+    <h1 style="font-family: 'Cinzel', serif; color: var(--gold-primary); margin-bottom: 20px;">BG SECURE ACCESS</h1>
     <input type="password" id="pin" placeholder="PIN CODE" onkeypress="if(event.key==='Enter') unlock()">
 </div>
 
-<!-- Панель управления -->
 <div class="sidebar" id="sidebar">
     <h2>BG IP Registry</h2>
-    <input type="text" id="in-id" placeholder="Registry ID (e.g. BG-001)" oninput="sync(this)">
+    <input type="text" id="in-id" placeholder="Registry ID" oninput="sync(this)">
     <input type="text" id="in-name" placeholder="Proprietor Name" oninput="sync(this)">
     <input type="text" id="in-title" placeholder="Asset Title" oninput="sync(this)">
     
@@ -139,54 +146,48 @@
     
     <div style="flex-grow: 1;"></div>
     
-    <button class="btn btn-gold" onclick="validateAndCommit()">1. COMMIT & PRINT</button>
+    <button class="btn btn-gold" onclick="validateAndPrint()">1. ISSUE & PRINT (PDF)</button>
     <button class="btn btn-blue" onclick="copyLink()">2. COPY LINK</button>
     <a id="mail-link" href="#" class="btn btn-red" onclick="prepareEmail()">3. SEND VIA EMAIL</a>
 </div>
 
-<!-- Сертификат -->
 <div class="viewport">
     <div id="certificate-render">
-        <div class="frame">
-            <div class="header-row">
-                <div class="cert-header-text">
-                    <h1>Certificate of Record</h1>
-                    <p>Intellectual Property Registry</p>
-                </div>
-                <!-- Здесь был QR, теперь пусто или логотип -->
+        <div class="gold-inner-frame">
+            
+            <div class="cert-header">
+                <h1>Certificate</h1>
+                <p>Intellectual Property Rights</p>
+                <div class="divider-line"></div>
             </div>
             
-            <!-- Блок Git Commit -->
-            <div class="git-commit-box">
-                <div class="git-header">
-                    <span class="git-badge">COMMIT</span>
-                    <span class="git-hash" id="git-short-hash">Waiting...</span>
-                </div>
-                <div class="git-meta">
-                    <strong>Author:</strong> BG Admin &lt;admin@bg-ip.local&gt;<br>
-                    <strong>Date:</strong> <span id="git-date">---</span><br>
-                    <strong>Message:</strong> Register IP Asset: <span id="git-msg-title">---</span>
+            <!-- RFC 3161 Timestamp Block -->
+            <div class="tsa-container">
+                <div class="tsa-stamp">
+                    <span class="tsa-label">RFC 3161 Trusted Timestamp</span>
+                    <span class="tsa-time" id="out-date">---</span>
+                    <div style="font-size: 8pt; margin-top: 4px;">Authority: BG TimeStamp Server</div>
                 </div>
             </div>
             
-            <div class="body-content">
-                <div class="field"><span class="label">Official Registry ID</span><span class="value" id="out-id">---</span></div>
-                <div class="field"><span class="label">Verified Asset Title</span><span class="value" id="out-title">---</span></div>
-                <div class="field"><span class="label">Legal Proprietor</span><span class="value" id="out-name">---</span></div>
+            <div class="cert-body">
+                <div class="data-field"><span class="f-label">Official Registry ID</span><span class="f-value" id="out-id">---</span></div>
+                <div class="data-field"><span class="f-label">Verified Asset Title</span><span class="f-value" id="out-title">---</span></div>
+                <div class="data-field"><span class="f-label">Legal Proprietor</span><span class="f-value" id="out-name">---</span></div>
                 
-                <div class="hash-box" style="background: #f8fafc; padding: 12px; font-family: monospace; font-size: 8pt; border-left: 4px solid var(--gold); word-break: break-all; color: #334155; line-height: 1.4; margin-top: 20px;">
+                <div class="hash-display">
                     <strong>SHA-256 DIGITAL FINGERPRINT:</strong><br>
                     <span id="out-hash">PENDING FILE VERIFICATION...</span>
                 </div>
             </div>
             
-            <div class="footer">
+            <div class="cert-footer">
                 <div class="issuer-info">
                     Registry Node: Ashdod / ISRAEL<br>
                     Security Protocol: Blockchain-Backed Architecture<br>
                     Issuer: BG Digital Archive Infrastructure
                 </div>
-                <div class="seal-area">
+                <div class="seal-wrap">
                     <img class="seal-img" src="signature1.png" alt="SEAL" onerror="this.style.display='none'">
                     <div class="seal-line">OFFICIAL BG SEAL</div>
                 </div>
@@ -215,13 +216,7 @@
         document.getElementById('out-name').innerText = urlParams.get('name') || 'N/A';
         document.getElementById('out-title').innerText = urlParams.get('title') || 'N/A';
         document.getElementById('out-hash').innerText = urlParams.get('hash') || 'NO HASH';
-        
-        const dateStr = urlParams.get('date');
-        document.getElementById('git-date').innerText = dateStr;
-        document.getElementById('out-date') ? document.getElementById('out-date').innerText = dateStr : null;
-        
-        document.getElementById('git-short-hash').innerText = (urlParams.get('hash') || '0000000').substring(0, 7);
-        document.getElementById('git-msg-title').innerText = urlParams.get('title');
+        document.getElementById('out-date').innerText = urlParams.get('date');
     }
 
     function sync(el) {
@@ -230,7 +225,7 @@
         el.classList.remove('error');
     }
 
-    function validateAndCommit() {
+    function validateAndPrint() {
         const ids = ['in-id', 'in-name', 'in-title'];
         let valid = true;
         ids.forEach(id => {
@@ -246,24 +241,16 @@
             return; 
         }
         
-        createCommit();
+        issueCertificate();
     }
 
-    function createCommit() {
-        // 1. Устанавливаем дату и данные коммита
+    function issueCertificate() {
+        // Генерация RFC 3161 Timestamp
         const now = new Date();
-        const dateStr = now.toLocaleString('en-GB', { day:'numeric', month:'long', year:'numeric', hour:'2-digit', minute:'2-digit' }) + " UTC";
-        
-        document.getElementById('git-date').innerText = dateStr;
-        document.getElementById('git-msg-title').innerText = document.getElementById('out-title').innerText;
-        
-        // Генерируем короткий хеш из полного хеша файла или случайный если файла нет
-        const fullHash = document.getElementById('out-hash').innerText;
-        const shortHash = fullHash.length > 7 ? fullHash.substring(0, 7) : Math.floor(Math.random()*16777215).toString(16).padStart(7, '0');
-        document.getElementById('git-short-hash').innerText = shortHash;
+        const dateStr = now.toLocaleString('en-GB', { day:'numeric', month:'long', year:'numeric', hour:'2-digit', minute:'2-digit', second:'2-digit' }) + " UTC";
+        document.getElementById('out-date').innerText = dateStr;
 
-        // 2. Запускаем печать (Скриншот/PDF)
-        // Небольшая задержка, чтобы браузер успел отрисовать текст даты
+        // Запуск печати (сохранение как PDF)
         setTimeout(() => {
             window.print();
         }, 500);
@@ -271,33 +258,23 @@
 
     function getFullLink() {
         const base = window.location.origin + window.location.pathname;
-        const hash = document.getElementById('out-hash').innerText;
-        const shortHash = hash.length > 7 ? hash.substring(0, 7) : 'pending';
-        
         return `${base}?view=true` +
             `&id=${encodeURIComponent(document.getElementById('out-id').innerText)}` +
             `&name=${encodeURIComponent(document.getElementById('out-name').innerText)}` +
             `&title=${encodeURIComponent(document.getElementById('out-title').innerText)}` +
-            `&hash=${encodeURIComponent(hash)}` +
-            `&date=${encodeURIComponent(document.getElementById('git-date').innerText)}`;
+            `&hash=${encodeURIComponent(document.getElementById('out-hash').innerText)}` +
+            `&date=${encodeURIComponent(document.getElementById('out-date').innerText)}`;
     }
 
     function copyLink() {
         const link = getFullLink();
-        navigator.clipboard.writeText(link).then(() => {
-            alert("Verification Link copied!");
-        });
+        navigator.clipboard.writeText(link).then(() => alert("Verification Link copied!"));
     }
 
     function prepareEmail() {
         const link = getFullLink();
-        const subject = `IP RECORD COMMIT: ${document.getElementById('out-title').innerText}`;
-        const body = `OFFICIAL REGISTRY RECORD\n\n` +
-                     `ID: ${document.getElementById('out-id').innerText}\n` +
-                     `Owner: ${document.getElementById('out-name').innerText}\n` +
-                     `Date: ${document.getElementById('git-date').innerText}\n\n` +
-                     `Verify authenticity here:\n${link}`;
-        
+        const subject = `IP RECORD: ${document.getElementById('out-title').innerText}`;
+        const body = `OFFICIAL REGISTRY RECORD\n\nID: ${document.getElementById('out-id').innerText}\nOwner: ${document.getElementById('out-name').innerText}\nDate: ${document.getElementById('out-date').innerText}\n\nVerify here:\n${link}`;
         document.getElementById('mail-link').href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     }
 
