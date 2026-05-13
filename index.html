@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BG IP Control | Certified System v3.2</title>
+    <title>BG IP Control | Certified System v3.3</title>
     
     <!-- Шрифты -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -87,7 +87,7 @@
 
         .viewport { flex: 1; display: flex; justify-content: center; align-items: center; padding: 40px; overflow: auto; background-image: radial-gradient(#cbd5e1 1px, transparent 1px); background-size: 20px 20px; }
 
-        /* Дизайн Сертификата A4 - ИСПРАВЛЕННЫЙ РАЗМЕР */
+        /* Дизайн Сертификата A4 - ОПТИМИЗИРОВАННЫЙ */
         #certificate-render {
             width: 210mm; 
             height: 297mm; /* Строго A4 */
@@ -101,20 +101,20 @@
         }
 
         .gold-inner-frame { 
-            margin: 10mm; 
+            margin: 8mm; /* Уменьшил внешние поля рамки */
             border: 3px solid var(--gold-primary); 
-            padding: 3px; 
-            height: calc(100% - 20mm); /* Вычитаем поля */
+            padding: 2px; 
+            height: calc(100% - 16mm); 
             position: relative;
             box-sizing: border-box;
         }
         .gold-inner-frame::after {
-            content: ''; position: absolute; top: 3px; left: 3px; right: 3px; bottom: 3px;
+            content: ''; position: absolute; top: 2px; left: 2px; right: 2px; bottom: 2px;
             border: 1px solid var(--gold-primary); pointer-events: none;
         }
         
         .cert-content { 
-            padding: 10mm 15mm 10mm 15mm; /* Уменьшил нижний отступ */
+            padding: 8mm 12mm 8mm 12mm; /* Компактные внутренние отступы */
             height: 100%; 
             display: flex; 
             flex-direction: column; 
@@ -124,59 +124,59 @@
 
         .cert-header { 
             text-align: center; 
-            margin-bottom: 30px; /* Уменьшил отступ */
-            margin-top: 10px; 
+            margin-bottom: 25px; 
+            margin-top: 5px; 
             position: relative;
             z-index: 1;
         }
         .cert-header h1 { 
-            font-family: 'Cinzel', serif; font-size: 36pt; /* Чуть меньше шрифт */
+            font-family: 'Cinzel', serif; font-size: 34pt; 
             margin: 0; color: var(--deep-blue); letter-spacing: 2px; 
         }
         .cert-header .sub-title { 
-            font-family: 'Cinzel', serif; font-size: 13pt; letter-spacing: 5px; 
-            color: var(--gold-primary); font-weight: 700; margin-top: 8px; text-transform: uppercase;
+            font-family: 'Cinzel', serif; font-size: 12pt; letter-spacing: 4px; 
+            color: var(--gold-primary); font-weight: 700; margin-top: 5px; text-transform: uppercase;
         }
-        .divider-line { width: 80px; height: 3px; background: var(--gold-primary); margin: 15px auto; }
+        .divider-line { width: 60px; height: 3px; background: var(--gold-primary); margin: 10px auto; }
 
         .cert-body { flex-grow: 1; font-family: 'Lato', sans-serif; }
-        .data-field { margin-bottom: 25px; position: relative; } /* Уменьшил отступ между полями */
+        .data-field { margin-bottom: 20px; position: relative; } /* Компактные поля */
         .f-label { 
-            font-size: 9pt; color: #64748b; text-transform: uppercase; 
-            letter-spacing: 1.5px; font-weight: 700; display: block; margin-bottom: 4px;
+            font-size: 8pt; color: #64748b; text-transform: uppercase; 
+            letter-spacing: 1.5px; font-weight: 700; display: block; margin-bottom: 2px;
         }
         .f-value { 
-            font-size: 18pt; color: var(--text-dark); font-weight: 400; 
-            border-bottom: 1px solid #cbd5e1; display: block; padding: 4px 0; 
-            font-family: 'Cinzel', serif; min-height: 22pt;
+            font-size: 16pt; color: var(--text-dark); font-weight: 400; 
+            border-bottom: 1px solid #cbd5e1; display: block; padding: 2px 0; 
+            font-family: 'Cinzel', serif; min-height: 20pt;
         }
 
         #hash-display { 
-            background: #f8fafc; padding: 10px; font-family: monospace; font-size: 8pt; 
-            border-left: 4px solid var(--gold-primary); margin-top: 20px; 
-            color: #475569; line-height: 1.4;
+            background: #f8fafc; padding: 8px; font-family: monospace; font-size: 7pt; 
+            border-left: 3px solid var(--gold-primary); margin-top: 15px; 
+            color: #475569; line-height: 1.3;
         }
 
-        /* Мета-информация - ИСПРАВЛЕНО ПОЛОЖЕНИЕ */
+        /* Мета-информация - СДВИНУТА ВНИЗ ОТ ЗАГОЛОВКА */
         .meta-top { 
             position: absolute; 
-            top: 12mm; /* Поднял выше, но не на заголовок */
+            top: 25mm; /* Гарантированный отступ от заголовка */
             right: 12mm; 
             text-align: right; 
             z-index: 10;
         }
         #qrcode { 
             background: #fff; 
-            padding: 4px; 
+            padding: 2px; 
             border: 1px solid #eee; 
             display: inline-block; 
-            width: 80px; /* Фиксируем размер контейнера */
-            height: 80px;
+            width: 70px; 
+            height: 70px;
         }
         .tsa-tag { 
-            color: #059669; font-weight: bold; font-size: 8pt; 
-            border: 1px solid #059669; padding: 3px 6px; margin-top: 5px; display: inline-block;
-            background: #ecfdf5; border-radius: 3px;
+            color: #059669; font-weight: bold; font-size: 7pt; 
+            border: 1px solid #059669; padding: 2px 5px; margin-top: 4px; display: inline-block;
+            background: #ecfdf5; border-radius: 2px;
         }
 
         /* Футер и Печать */
@@ -185,18 +185,18 @@
             justify-content: space-between; 
             align-items: flex-end; 
             margin-top: auto; 
-            padding-top: 15px; /* Уменьшил отступ */
+            padding-top: 10px; 
         }
-        .issuer-info { font-size: 8pt; color: #94a3b8; line-height: 1.5; font-style: italic; }
+        .issuer-info { font-size: 7pt; color: #94a3b8; line-height: 1.4; font-style: italic; }
         
-        .official-seal-wrap { text-align: center; width: 160px; position: relative; }
+        .official-seal-wrap { text-align: center; width: 140px; position: relative; }
         .seal-img { 
-            width: 120px; height: auto; display: block; margin: 0 auto 5px auto; 
+            width: 100px; height: auto; display: block; margin: 0 auto 2px auto; 
             mix-blend-mode: multiply; opacity: 0.9;
         }
         .signature-line { 
-            border-top: 1px solid var(--deep-blue); width: 100%; margin-top: 5px; 
-            font-size: 9pt; font-weight: bold; color: var(--deep-blue); padding-top: 4px;
+            border-top: 1px solid var(--deep-blue); width: 100%; margin-top: 2px; 
+            font-size: 8pt; font-weight: bold; color: var(--deep-blue); padding-top: 2px;
         }
 
         @keyframes shake {
@@ -273,7 +273,7 @@
                     </div>
                     <div class="data-field">
                         <span class="f-label">Certified TimeStamp (RFC 3161)</span>
-                        <span class="f-value" id="out-date" style="color: #059669; font-size: 15pt;">---</span>
+                        <span class="f-value" id="out-date" style="color: #059669; font-size: 14pt;">---</span>
                     </div>
 
                     <div id="hash-display">
@@ -285,11 +285,11 @@
                 <div class="cert-footer">
                     <div class="issuer-info">
                         <strong>Registry Node:</strong> Ashdod / ISRAEL<br>
-                        <strong>Security Protocol:</strong> Blockchain-Backed Architecture<br>
+                        Security Protocol: Blockchain-Backed Architecture<br>
                         Issuer: BG Digital Archive Infrastructure
                     </div>
                     <div class="official-seal-wrap">
-                        <!-- ВАЖНО: Убедитесь, что signature1.png лежит рядом с этим файлом -->
+                        <!-- ВАЖНО: Файл signature1.png должен лежать рядом с этим HTML файлом -->
                         <img class="seal-img" id="seal-placeholder" src="signature1.png" alt="OFFICIAL SEAL" onerror="this.style.display='none'">
                         <div class="signature-line">OFFICIAL BG SEAL</div>
                     </div>
@@ -359,8 +359,8 @@
         try {
             new QRCode(qrContainer, {
                 text: text,
-                width: 70, /* Уменьшил размер QR */
-                height: 70,
+                width: 65, /* Еще немного уменьшил для надежности */
+                height: 65,
                 colorDark : "#0f172a",
                 colorLight : "#ffffff",
                 correctLevel : QRCode.CorrectLevel.H
@@ -387,7 +387,7 @@
         const link = getFullLink();
         createQR(link);
 
-        // Увеличил задержку для гарантии отрисовки QR
+        // Задержка для отрисовки QR
         setTimeout(() => {
             const element = document.getElementById('certificate-render');
             
@@ -400,13 +400,15 @@
                     scale: 2, 
                     useCORS: true, 
                     logging: false,
-                    letterRendering: true
+                    letterRendering: true,
+                    scrollY: 0 // Важно: сброс прокрутки
                 },
                 jsPDF: { 
                     unit: 'mm', 
                     format: 'a4', 
                     orientation: 'portrait',
-                    compress: true
+                    compress: true,
+                    hotfixes: ["px_scaling"] // Исправление масштабирования
                 }
             };
 
