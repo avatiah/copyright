@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>BG IP Control | Secured Intellectual Property Registry</title>
+    <title>BG IP Control | IP Registry | Secured Registry</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     
@@ -16,14 +16,14 @@
         }
         body { font-family: 'Georgia', serif; margin: 0; display: flex; background: #2c2c2c; height: 100vh; overflow: hidden; }
 
-        /* Auth Overlay */
+        /* Auth */
         #auth-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--dark);
             z-index: 2000; display: flex; justify-content: center; align-items: center; flex-direction: column; color: white;
         }
         #auth-overlay input { padding: 15px; border-radius: 8px; border: 1px solid var(--panel-border); background: var(--panel-grey); color: #fcf6ba; text-align: center; font-size: 1.5rem; letter-spacing: 5px; }
 
-        /* Admin Panel */
+        /* Panel */
         .admin-panel { 
             width: 360px; background: var(--panel-grey); color: #ddd; padding: 25px; 
             display: flex; flex-direction: column; gap: 12px; border-right: 2px solid var(--panel-border); z-index: 100; overflow-y: auto;
@@ -33,7 +33,7 @@
         .btn-url { background: #2980b9; color: white; border:none; padding:12px; cursor:pointer; border-radius:5px; }
         .btn-gmail { background: #d44638; color: white; border: none; padding: 12px; cursor: pointer; border-radius: 5px; font-weight: bold; }
 
-        /* Preview Viewport */
+        /* Viewport */
         .preview-viewport { flex: 1; display: flex; justify-content: center; align-items: center; padding: 30px; overflow-y: auto; background: #333; }
 
         #certificate-render {
@@ -41,7 +41,7 @@
             box-sizing: border-box; display: flex; flex-direction: column;
             background: radial-gradient(circle, #ffffff 0%, #f4f4f4 100%);
             box-shadow: 0 0 60px rgba(0,0,0,0.6);
-            overflow: hidden; /* Fix for PDF break */
+            overflow: hidden;
         }
 
         .main-frame { margin: 20mm; border: 0.8mm solid var(--panel-border); height: calc(100% - 40mm); padding: 15mm; display: flex; flex-direction: column; position: relative; z-index: 10; background: rgba(255,255,255,0.7); }
@@ -55,9 +55,10 @@
         .content-area { flex-grow: 1; font-size: 16pt; color: #1a1a1a; text-align: center; line-height: 1.6; }
         .data-box { display: block; font-weight: bold; border-bottom: 1px solid var(--panel-border); margin: 5px auto 12px; width: 85%; padding: 5px; color: #000; min-height: 1.2em; }
 
-        /* QR Code Styling */
+        /* QR Code Styling (BUG FIX: Repositioned to prevent overlap) */
         #qrcode-wrapper {
-            position: absolute; bottom: 25mm; left: 25mm;
+            position: absolute; bottom: 25mm; 
+            right: 25mm; /* BUG FIX: Changed from Left to Right */
             display: none; flex-direction: column; align-items: center; gap: 5px; z-index: 50;
         }
         .qr-label { font-size: 7pt; font-family: sans-serif; color: #888; text-transform: uppercase; }
@@ -108,7 +109,7 @@
     
     <hr style="border:0.5px solid #333; width:100%; margin:10px 0;">
     
-    <button class="btn-gmail" onclick="mailFixation()">✉ Fixate via Gmail</button>
+    <a id="gmail-fix-link" href="#" target="_blank" class="btn-gmail" style="display:inline-block; text-align:center; text-decoration:none;">✉ Fixate via Gmail</a>
 </div>
 
 <div class="preview-viewport">
@@ -164,9 +165,9 @@
 <script>
     const MASTER_PIN = "8063";
     let storedSig = localStorage.getItem('bg_sig') || "";
-    let qrcodeAPI = null; // Declare QR globally
+    let qrcodeAPI = null;
 
-    // Check View Mode First (to hide password for client)
+    // Check View Mode Immediately
     const urlCheck = new URLSearchParams(window.location.search);
     if(urlCheck.get('view')) {
         initClientView(urlCheck);
@@ -176,11 +177,11 @@
     function unlockAdmin() {
         if(document.getElementById('pass').value === MASTER_PIN) {
             document.getElementById('auth-overlay').style.display = 'none';
-            // Initialize QR API only in admin mode
             if(!qrcodeAPI) {
                 qrcodeAPI = new QRCode(document.getElementById("qrcode"), { width: 90, height: 90 });
             }
             applySignature();
+            updateGmailFixLink(); // Prepare mail link on unlock
         } else { alert("Access Denied"); }
     }
 
@@ -200,10 +201,9 @@
         document.getElementById('tsa-tag').style.display = 'block';
         document.getElementById('qrcode-wrapper').style.display = 'flex';
         
-        // Load Signature & QR for client
         applySignature();
         
-        // Need to load QRCode JS library for client too
+        // Generate QR Code for the current client URL
         setTimeout(() => {
             if(!qrcodeAPI) {
                 qrcodeAPI = new QRCode(document.getElementById("qrcode"), { width: 90, height: 90 });
@@ -217,6 +217,7 @@
         document.getElementById('outID').innerText = document.getElementById('inID').value || '---';
         document.getElementById('outName').innerText = document.getElementById('inName').value || '---';
         document.getElementById('outTitle').innerText = document.getElementById('inTitle').value || '---';
+        updateGmailFixLink(); // Keep mail link updated
     }
 
     async function generateHashFromFile(input) {
@@ -225,6 +226,7 @@
         const hashBuf = await crypto.subtle.digest('SHA-256', buffer);
         const hash = Array.from(new Uint8Array(hashBuf)).map(b => b.toString(16).padStart(2,'0')).join('').toUpperCase();
         document.getElementById('outHash').innerText = hash;
+        updateGmailFixLink(); // Keep mail link updated
     }
 
     function captureSignature(input) {
@@ -244,15 +246,24 @@
         }
     }
 
-    // --- BUTTON: Export PDF (Corrected Logic) ---
+    // --- BUG FIX: Consistent Link Building ---
+    function buildSharableLink() {
+        // Construct the full view URL correctly
+        return window.location.origin + window.location.pathname + 
+            `?view=true&id=${encodeURIComponent(document.getElementById('outID').innerText)}` +
+            `&name=${encodeURIComponent(document.getElementById('outName').innerText)}` +
+            `&title=${encodeURIComponent(document.getElementById('outTitle').innerText)}` +
+            `&hash=${encodeURIComponent(document.getElementById('outHash').innerText)}` +
+            `&date=${encodeURIComponent(document.getElementById('outDate').innerText)}`;
+    }
+
+    // --- Action: Export PDF ---
     async function executeFinalization() {
-        const tag TSA = document.getElementById('tsa-tag');
-        const qrw = document.getElementById('qrcode-wrapper');
+        // Show status elements
+        document.getElementById('tsa-tag').style.display = 'block';
+        document.getElementById('qrcode-wrapper').style.display = 'flex';
         
-        TSA.style.display = 'block'; // Show TSA
-        qrw.style.display = 'flex'; // Show QR wrapper
-        
-        // Fix TSA Date
+        // TSA Timestamp Fixation
         try {
             const res = await fetch('https://worldtimeapi.org/api/timezone/Asia/Jerusalem');
             const data = await res.json();
@@ -260,17 +271,17 @@
         } catch(e) {
             document.getElementById('outDate').innerText = new Date().toLocaleString() + " (Fixed)";
         }
+        updateGmailFixLink(); // Update mail link after timestamp fix
 
-        // Generate QR for PDF
-        const linkPDF = buildSharableLink();
-        if(qrcodeAPI) qrcodeAPI.makeCode(linkPDF);
+        // Generate QR for the view link within the PDF
+        const pdfLink = buildSharableLink();
+        if(qrcodeAPI) qrcodeAPI.makeCode(pdfLink);
 
-        // Wait for rendering then save PDF
+        // PDF Generation
         setTimeout(() => {
             const element = document.getElementById('certificate-render');
             html2pdf().set({
-                margin: 0, 
-                filename: 'BG_IP_Registry_' + (document.getElementById('inID').value || 'new') + '.pdf',
+                margin: 0, filename: 'BG_IP_Registry.pdf',
                 image: { type: 'jpeg', quality: 1 },
                 html2canvas: { scale: 3, useCORS: true },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
@@ -281,45 +292,61 @@
         }, 800);
     }
 
-    function buildSharableLink() {
-        return window.location.origin + window.location.pathname + 
-            `?view=true&id=${encodeURIComponent(document.getElementById('outID').innerText)}` +
-            `&name=${encodeURIComponent(document.getElementById('outName').innerText)}` +
-            `&title=${encodeURIComponent(document.getElementById('outTitle').innerText)}` +
-            `&hash=${encodeURIComponent(document.getElementById('outHash').innerText)}` +
-            `&date=${encodeURIComponent(document.getElementById('outDate').innerText)}`;
-    }
-
-    // --- BUTTON: Generate URL & Update QR (Fixed Logic) ---
+    // --- Action: Generate URL & Update QR ---
     function generateClientLink() {
-        // Show QR on viewport before constructing URL
+        // Show QR before constructing URL
         document.getElementById('qrcode-wrapper').style.display = 'flex';
         
         const link = buildSharableLink();
+        
+        // Update QR Code on screen
         if(qrcodeAPI) qrcodeAPI.makeCode(link);
         
-        navigator.clipboard.writeText(link).then(() => {
-            alert("Sharable Client Link copied to clipboard. QR Code updated.");
-        }).catch(err => {
-            alert("Error copying link, please copy manually from URL bar after opening it.");
-        });
+        // BUG FIX: Improved copy link mechanism
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(link).then(() => {
+                alert("Sharable Client Link copied to clipboard. QR Code updated.");
+            }).catch(err => {
+                alert("Failed to copy link. Please manually copy the URL parameters after unlocking view mode.");
+            });
+        } else {
+            // Fallback for older browsers
+            prompt("Sharable Client Link (Copy below):", link);
+        }
     }
 
-    function mailFixation() {
-        const title = document.getElementById('outTitle').innerText;
-        const hash = document.getElementById('outHash').innerText;
-        const bodyText = `OFFICIAL INTELLECTUAL PROPERTY FIXATION\n` +
-            `------------------------------------------\n` +
-            `Proprietor: ${document.getElementById('outName').innerText}\n` +
-            `Asset Title: ${title}\n` +
-            `Registry ID: ${document.getElementById('outID').innerText}\n` +
-            `Certified Date: ${document.getElementById('outDate').innerText}\n` +
-            `SHA-256 HASH: ${hash}\n\n` +
-            `Verified by BG IP Control. Jurisdiction: Israel.`;
-        
-        const subject = `COPYRIGHT FIXATION: ${title} | HASH: ${hash.substring(0,12)}...`;
-        
-        window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(bodyText)}`;
+    // --- Action: Fix Gmail Mailto (BUG FIX: Stable Execution) ---
+    function updateGmailFixLink() {
+        // Only run if admin overlay is gone
+        if (document.getElementById('auth-overlay').style.display === 'none') {
+            const id = document.getElementById('outID').innerText;
+            const name = document.getElementById('outName').innerText;
+            const title = document.getElementById('outTitle').innerText;
+            const hash = document.getElementById('outHash').innerText;
+            const date = document.getElementById('outDate').innerText;
+
+            // Construct mail body
+            const bodyText = `OFFICIAL INTELLECTUAL PROPERTY FIXATION\n` +
+                `------------------------------------------\n` +
+                `Proprietor: ${name}\n` +
+                `Asset Title: ${title}\n` +
+                `Registry ID: ${id}\n` +
+                `Certified Date: ${date}\n` +
+                `SHA-256 HASH: ${hash}\n\n` +
+                `Verified by BG IP Control. Jurisdiction: Israel.`;
+            
+            // Construct subject
+            const subject = `COPYRIGHT FIXATION: ${title} | HASH: ${hash.substring(0,12)}...`;
+            
+            // Generate full mailto URL
+            const mailtoUrl = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(bodyText)}`;
+            
+            // Update the link element
+            const linkElem = document.getElementById('gmail-fix-link');
+            if (linkElem) {
+                linkElem.href = mailtoUrl;
+            }
+        }
     }
 </script>
 </body>
