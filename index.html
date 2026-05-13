@@ -2,8 +2,10 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Elite Copyright Registry | BG IP Control</title>
+    <title>BG IP Control | Secured Registry</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    
     <style>
         :root {
             --gold: linear-gradient(45deg, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c);
@@ -11,14 +13,14 @@
         }
         body { font-family: 'Georgia', serif; margin: 0; display: flex; background: #2c2c2c; height: 100vh; overflow: hidden; }
 
-        /* Auth Overlay */
+        /* Auth */
         #auth-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--dark);
             z-index: 2000; display: flex; justify-content: center; align-items: center; flex-direction: column; color: white;
         }
         #auth-overlay input { padding: 15px; border-radius: 8px; border: 1px solid #aa771c; background: #1a1a1a; color: #fcf6ba; text-align: center; font-size: 1.5rem; letter-spacing: 5px; }
 
-        /* Control Panel */
+        /* Admin Panel */
         .admin-panel { 
             width: 360px; background: #1a1a1a; color: #ddd; padding: 25px; 
             display: flex; flex-direction: column; gap: 15px; border-right: 2px solid #aa771c; z-index: 100; overflow-y: auto;
@@ -26,7 +28,7 @@
         .admin-panel input { background: #252525; color: white; border: 1px solid #444; padding: 10px; border-radius: 5px; }
         .btn-main { background: var(--gold); border: none; padding: 14px; font-weight: bold; cursor: pointer; border-radius: 5px; color: #111; text-transform: uppercase; }
         
-        /* Certificate Canvas */
+        /* Layout */
         .preview-viewport { flex: 1; display: flex; justify-content: center; align-items: center; padding: 30px; overflow-y: auto; background: #333; }
 
         #certificate-render {
@@ -35,116 +37,101 @@
             background: radial-gradient(circle, #ffffff 0%, #f4f4f4 100%);
             box-shadow: 0 0 60px rgba(0,0,0,0.6);
         }
-        
-        #certificate-render::before {
-            content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 30L0 0h60L30 30z' fill='%3Caa771c' fill-opacity='0.02'/%3E%3C/svg%3E");
-            pointer-events: none;
-        }
 
-        /* Decorative Corners */
-        .corner { position: absolute; width: 45mm; height: 45mm; border: 2mm solid transparent; pointer-events: none; }
-        .tl { top: 8mm; left: 8mm; border-top-color: #aa771c; border-left-color: #aa771c; }
-        .tr { top: 8mm; right: 8mm; border-top-color: #aa771c; border-right-color: #aa771c; }
-        .bl { bottom: 8mm; left: 8mm; border-bottom-color: #aa771c; border-left-color: #aa771c; }
-        .br { bottom: 8mm; right: 8mm; border-bottom-color: #aa771c; border-right-color: #aa771c; }
+        .main-frame { margin: 20mm; border: 0.8mm solid #aa771c; height: calc(100% - 40mm); padding: 15mm; display: flex; flex-direction: column; position: relative; z-index: 10; }
 
-        .watermark {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-45deg);
-            font-size: 110pt; color: rgba(170, 119, 28, 0.04); font-weight: 900; pointer-events: none;
-        }
-
-        .main-frame { margin: 22mm; border: 0.8mm solid #aa771c; height: calc(100% - 44mm); padding: 15mm; display: flex; flex-direction: column; position: relative; z-index: 10; }
-
-        .header-title { text-align: center; margin-bottom: 35px; }
+        .header-title { text-align: center; margin-bottom: 30px; }
         .header-title h1 { 
             background: var(--gold); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
             font-size: 48pt; margin: 0; font-family: 'Times New Roman', serif;
         }
 
-        .content-area { flex-grow: 1; font-size: 17pt; color: #1a1a1a; text-align: center; line-height: 1.7; }
-        .data-box { display: block; font-weight: bold; border-bottom: 1px solid #aa771c; margin: 8px auto 20px; width: 85%; padding: 5px; color: #000; }
+        .content-area { flex-grow: 1; font-size: 17pt; color: #1a1a1a; text-align: center; line-height: 1.6; }
+        .data-box { display: block; font-weight: bold; border-bottom: 1px solid #aa771c; margin: 5px auto 15px; width: 85%; padding: 5px; color: #000; }
+
+        /* QR Code Styling */
+        #qrcode-container {
+            position: absolute; bottom: 25mm; left: 25mm;
+            display: flex; flex-direction: column; align-items: center; gap: 5px;
+        }
+        #qrcode img { border: 2px solid #fff; box-shadow: 0 0 5px rgba(0,0,0,0.1); }
+        .qr-label { font-size: 7pt; font-family: sans-serif; color: #888; text-transform: uppercase; }
+
+        .footer-row { display: flex; justify-content: flex-end; align-items: flex-end; margin-top: 30px; }
+        .signature-wrap { text-align: center; width: 220px; }
+        #sig-img { max-height: 80px; mix-blend-mode: multiply; filter: contrast(1.1); }
 
         .tsa-stamp { 
             position: absolute; top: 15mm; right: 15mm; border: 2px solid #27ae60; color: #27ae60;
-            padding: 8px; font-size: 9pt; font-family: 'Courier New', monospace; transform: rotate(10deg); font-weight: bold; background: rgba(255,255,255,0.9);
+            padding: 8px; font-size: 9pt; font-family: monospace; transform: rotate(10deg); font-weight: bold; background: #fff;
         }
 
-        .hash-display { background: #f8f8f8; border: 1px solid #ddd; padding: 12px; font-size: 10pt; font-family: monospace; word-break: break-all; margin-top: 25px; }
-
-        .footer-row { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 30px; }
-        .signature-wrap { text-align: center; width: 220px; }
-        #sig-img { max-height: 85px; width: auto; mix-blend-mode: multiply; filter: contrast(1.2); }
-        
         body.client-mode .admin-panel { display: none; }
     </style>
 </head>
 <body>
 
 <div id="auth-overlay">
-    <h1 style="background: var(--gold); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">BG SECURE ACCESS</h1>
+    <h1 style="background: var(--gold); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">BG IP CONTROL</h1>
     <input type="password" id="pass" placeholder="PIN CODE" onkeypress="if(event.key==='Enter') unlock()">
 </div>
 
 <div class="admin-panel">
-    <h2 style="color: #aa771c;">BG IP Control Editor</h2>
+    <h2 style="color: #aa771c;">Certificate System</h2>
     <input type="text" id="inID" placeholder="Registration ID" oninput="sync()">
     <input type="text" id="inName" placeholder="Legal Owner" oninput="sync()">
     <input type="text" id="inTitle" placeholder="Work Title" oninput="sync()">
     
-    <label style="font-size: 10px; margin-top:10px;">1. CALCULATE FILE HASH</label>
-    <input type="file" onchange="generateFileHash(this)">
+    <input type="file" onchange="generateFileHash(this)" id="fHash">
+    <label for="fHash" style="font-size: 9px; cursor:pointer;">[ 1. Click to Hash File ]</label>
     
-    <label style="font-size: 10px;">2. UPLOAD SIGNATURE (ONCE)</label>
-    <input type="file" onchange="storeSignature(this)">
+    <input type="file" onchange="storeSignature(this)" id="fSig">
+    <label for="fSig" style="font-size: 9px; cursor:pointer;">[ 2. Upload Signature ]</label>
     
-    <button class="btn-main" style="margin-top:20px;" onclick="finalizeCertificate()">Fix TSA & Save PDF</button>
-    <button style="background: #2980b9; color: white; border:none; padding:12px; cursor:pointer; border-radius:5px;" onclick="getShareableLink()">Get Client Link</button>
+    <button class="btn-main" onclick="finalizeCertificate()" style="margin-top:15px;">Fix TSA & Export PDF</button>
+    <button style="background: #2980b9; color: white; border:none; padding:12px; cursor:pointer; border-radius:5px;" onclick="getShareableLink()">Generate QR & Link</button>
 </div>
 
 <div class="preview-viewport">
     <div id="certificate-render">
-        <div class="corner tl"></div><div class="corner tr"></div>
-        <div class="corner bl"></div><div class="corner br"></div>
-        <div class="watermark">CERTIFIED</div>
-        
         <div id="tsa-tag" class="tsa-stamp" style="display:none;">✓ RFC 3161 TSA VERIFIED</div>
+
+        <div id="qrcode-container">
+            <div id="qrcode"></div>
+            <div class="qr-label">Scan to Verify Asset</div>
+        </div>
 
         <div class="main-frame">
             <div class="header-title">
                 <h1>Certificate</h1>
-                <p style="letter-spacing: 6px; font-weight: bold; color: #aa771c; margin: 0; font-size: 11pt;">INTELLECTUAL PROPERTY REGISTRY</p>
+                <p style="letter-spacing: 5px; font-weight: bold; color: #aa771c; margin: 0; font-size: 10pt;">OF INTELLECTUAL PROPERTY CONTROL</p>
             </div>
 
             <div class="content-area">
-                <div style="font-size: 11pt; text-transform: uppercase; color: #aa771c;">Registry Entry</div>
+                <div style="font-size: 10pt; text-transform: uppercase; color: #aa771c;">Registration No.</div>
                 <span class="data-box" id="outID">PENDING</span>
                 
-                <div style="font-size: 11pt; text-transform: uppercase; color: #aa771c;">Asset Title</div>
-                <span class="data-box" id="outTitle" style="font-style: italic; font-size: 19pt;">[WORK NAME]</span>
+                <div style="font-size: 10pt; text-transform: uppercase; color: #aa771c;">Subject Title</div>
+                <span class="data-box" id="outTitle" style="font-style: italic; font-size: 20pt;">[TITLE]</span>
                 
-                <div style="font-size: 11pt; text-transform: uppercase; color: #aa771c;">Proprietor</div>
-                <span class="data-box" id="outName">[HOLDER]</span>
+                <div style="font-size: 10pt; text-transform: uppercase; color: #aa771c;">Rightful Proprietor</div>
+                <span class="data-box" id="outName">[OWNER]</span>
 
-                <div style="margin-top: 25px; font-size: 12pt;">
-                    Certified Timestamp: <strong id="outDate">Awaiting fixation...</strong><br>
-                    Legal Jurisdiction: <strong>Israel</strong>
+                <div style="margin-top: 25px; font-size: 11pt;">
+                    Registry Date: <strong id="outDate">Not Fixed</strong><br>
+                    Verified by BG IP Control / Israel
                 </div>
 
-                <div class="hash-display">
-                    <div style="font-weight: bold; margin-bottom: 5px; color: #111;">DIGITAL FINGERPRINT (SHA-256)</div>
-                    <div id="outHash">Select file to generate...</div>
+                <div style="background: #f9f9f9; padding: 10px; font-size: 9pt; font-family: monospace; border: 1px solid #eee; margin-top: 20px;">
+                    <div style="font-weight: bold; color: #555;">SHA-256 ASSET FINGERPRINT:</div>
+                    <div id="outHash" style="word-break: break-all;">AWAITING COMPUTATION...</div>
                 </div>
             </div>
 
             <div class="footer-row">
                 <div class="signature-wrap">
-                    <img id="sig-img" src="" style="display:none;">
-                    <div style="border-top: 1.5px solid #111; padding-top: 5px; font-weight: bold; font-size: 11pt;">Authorized Signature</div>
-                </div>
-                <div style="font-size: 9pt; text-align: right; color: #666; line-height: 1.4;">
-                    Encryption: AES-256 / SHA-256<br>
-                    Verified by BG IP Control
+                    <img id="sig-img" style="display:none;">
+                    <div style="border-top: 1.5px solid #111; padding-top: 5px; font-weight: bold; font-size: 10pt;">Authorized Signature</div>
                 </div>
             </div>
         </div>
@@ -153,21 +140,17 @@
 
 <script>
     const CODE = "8063";
-    let activeSig = localStorage.getItem('avatiah_sig') || "";
+    let activeSig = localStorage.getItem('bg_sig') || "";
+    let qrcode = new QRCode(document.getElementById("qrcode"), { width: 90, height: 90 });
 
     function unlock() {
         if(document.getElementById('pass').value === CODE) {
             document.getElementById('auth-overlay').style.display = 'none';
-            loadStoredSig();
+            if(activeSig) {
+                const img = document.getElementById('sig-img');
+                img.src = activeSig; img.style.display = 'inline-block';
+            }
         } else { alert("Access Denied"); }
-    }
-
-    function loadStoredSig() {
-        if(activeSig) {
-            const img = document.getElementById('sig-img');
-            img.src = activeSig;
-            img.style.display = 'inline-block';
-        }
     }
 
     const urlVars = new URLSearchParams(window.location.search);
@@ -180,7 +163,12 @@
         document.getElementById('outHash').innerText = urlVars.get('hash');
         document.getElementById('outDate').innerText = urlVars.get('date');
         document.getElementById('tsa-tag').style.display = 'block';
-        loadStoredSig(); 
+        if(activeSig) { 
+            const img = document.getElementById('sig-img');
+            img.src = activeSig; img.style.display = 'inline-block';
+        }
+        // Генерируем QR для текущей страницы
+        qrcode.makeCode(window.location.href);
     }
 
     function sync() {
@@ -192,8 +180,8 @@
     async function generateFileHash(input) {
         if(!input.files[0]) return;
         const buffer = await input.files[0].arrayBuffer();
-        const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
-        const hash = Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2,'0')).join('').toUpperCase();
+        const hashBuf = await crypto.subtle.digest('SHA-256', buffer);
+        const hash = Array.from(new Uint8Array(hashBuf)).map(b => b.toString(16).padStart(2,'0')).join('').toUpperCase();
         document.getElementById('outHash').innerText = hash;
     }
 
@@ -201,8 +189,9 @@
         const reader = new FileReader();
         reader.onload = (e) => {
             activeSig = e.target.result;
-            localStorage.setItem('avatiah_sig', activeSig);
-            loadStoredSig();
+            localStorage.setItem('bg_sig', activeSig);
+            const img = document.getElementById('sig-img');
+            img.src = activeSig; img.style.display = 'inline-block';
         };
         reader.readAsDataURL(input.files[0]);
     }
@@ -214,29 +203,40 @@
             const data = await res.json();
             document.getElementById('outDate').innerText = data.datetime.replace('T', ' ').substring(0, 19) + " IDT";
         } catch(e) {
-            document.getElementById('outDate').innerText = new Date().toLocaleString() + " (Fixed)";
+            document.getElementById('outDate').innerText = new Date().toLocaleString();
         }
 
-        const element = document.getElementById('certificate-render');
-        html2pdf().set({
-            margin: 0, filename: 'BG_Copyright_Certificate.pdf',
-            image: { type: 'jpeg', quality: 1 },
-            html2canvas: { scale: 3, useCORS: true },
-            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-        }).from(element).toPdf().get('pdf').then(pdf => {
-            while(pdf.internal.getNumberOfPages() > 1) pdf.deletePage(2);
-        }).save();
+        // Обновляем QR перед сохранением PDF
+        const currentLink = constructLink();
+        qrcode.makeCode(currentLink);
+
+        setTimeout(() => {
+            const element = document.getElementById('certificate-render');
+            html2pdf().set({
+                margin: 0, filename: 'BG_IP_Certificate.pdf',
+                image: { type: 'jpeg', quality: 1 },
+                html2canvas: { scale: 3, useCORS: true },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            }).from(element).toPdf().get('pdf').then(pdf => {
+                while(pdf.internal.getNumberOfPages() > 1) pdf.deletePage(2);
+            }).save();
+        }, 500);
     }
 
-    function getShareableLink() {
-        const link = window.location.origin + window.location.pathname + 
+    function constructLink() {
+        return window.location.origin + window.location.pathname + 
             `?view=true&id=${encodeURIComponent(document.getElementById('outID').innerText)}` +
             `&name=${encodeURIComponent(document.getElementById('outName').innerText)}` +
             `&title=${encodeURIComponent(document.getElementById('outTitle').innerText)}` +
             `&hash=${encodeURIComponent(document.getElementById('outHash').innerText)}` +
             `&date=${encodeURIComponent(document.getElementById('outDate').innerText)}`;
+    }
+
+    function getShareableLink() {
+        const link = constructLink();
+        qrcode.makeCode(link);
         navigator.clipboard.writeText(link);
-        alert("Client Link Copied!");
+        alert("Link Copied & QR Updated!");
     }
 </script>
 </body>
