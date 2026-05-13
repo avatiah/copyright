@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>BG IP Control | Link & Signature Fixed</title>
+    <title>BG IP Control | Buttons Fixed</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     
@@ -25,10 +25,11 @@
             width: 350px; background: var(--panel-grey); color: #ddd; padding: 20px; 
             display: flex; flex-direction: column; gap: 10px; border-right: 2px solid var(--panel-border); z-index: 100; overflow-y: auto;
         }
-        .admin-panel input { background: #252525; color: white; border: 1px solid #444; padding: 10px; border-radius: 5px; }
-        .btn-main { background: var(--gold); border: none; padding: 14px; font-weight: bold; cursor: pointer; border-radius: 5px; color: #111; text-transform: uppercase; }
-        .btn-url { background: #2980b9; color: white; border: none; padding: 12px; cursor: pointer; border-radius: 5px; font-weight: bold; margin-top: 5px; }
-        .btn-gmail { background: #d44638; color: white; border: none; padding: 12px; cursor: pointer; border-radius: 5px; font-weight: bold; text-align: center; text-decoration: none; display: block; }
+        .admin-panel input { background: #252525; color: white; border: 1px solid #444; padding: 10px; border-radius: 5px; width: 90%; }
+        
+        .btn-main { background: var(--gold); border: none; padding: 14px; font-weight: bold; cursor: pointer; border-radius: 5px; color: #111; text-transform: uppercase; width: 100%; }
+        .btn-url { background: #2980b9; color: white; border: none; padding: 12px; cursor: pointer; border-radius: 5px; font-weight: bold; width: 100%; }
+        .btn-gmail { background: #d44638; color: white; border: none; padding: 12px; cursor: pointer; border-radius: 5px; font-weight: bold; text-align: center; text-decoration: none; display: block; width: 100%; box-sizing: border-box; }
 
         .preview-viewport { flex: 1; display: flex; justify-content: center; align-items: center; background: #333; overflow: hidden; padding: 10px; }
 
@@ -36,24 +37,20 @@
             width: 210mm; height: 297mm; background: #fff; position: relative;
             box-sizing: border-box; display: flex; flex-direction: column;
             background: radial-gradient(circle, #ffffff 0%, #f9f9f9 100%);
-            overflow: hidden;
+            overflow: hidden; box-shadow: 0 0 20px rgba(0,0,0,0.5);
         }
 
         .main-frame { margin: 12mm; border: 1mm solid var(--panel-border); height: calc(100% - 24mm); padding: 12mm; display: flex; flex-direction: column; position: relative; box-sizing: border-box; }
 
-        .header-title { text-align: center; margin-bottom: 20px; }
         .header-title h1 { 
             background: var(--gold); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-            font-size: 46pt; margin: 0; font-family: 'Times New Roman', serif;
+            font-size: 46pt; margin: 0; font-family: 'Times New Roman', serif; text-align: center;
         }
 
-        .content-area { flex-grow: 1; font-size: 15pt; color: #1a1a1a; text-align: center; line-height: 1.5; }
+        .content-area { flex-grow: 1; font-size: 15pt; color: #1a1a1a; text-align: center; line-height: 1.5; margin-top: 30px; }
         .data-box { display: block; font-weight: bold; border-bottom: 1.5px solid #ddd; margin: 2px auto 12px; width: 85%; padding: 5px; color: #000; min-height: 1.2em; }
 
-        #qrcode-wrapper {
-            position: absolute; bottom: 65mm; right: 20mm;
-            display: none; flex-direction: column; align-items: center; gap: 4px; z-index: 50;
-        }
+        #qrcode-wrapper { position: absolute; bottom: 65mm; right: 20mm; display: none; flex-direction: column; align-items: center; gap: 4px; }
 
         .footer-row { display: flex; justify-content: space-between; align-items: flex-end; margin-top: auto; }
         .signature-wrap { text-align: center; width: 220px; }
@@ -74,46 +71,52 @@
     <input type="password" id="pass" placeholder="PIN" onkeypress="if(event.key==='Enter') unlockAdmin()">
 </div>
 
-<div class="admin-panel">
+<div class="admin-panel" id="adminPanel">
     <h2 style="color: #aa771c; margin: 0 0 10px 0;">IP Manager</h2>
     <input type="text" id="inID" placeholder="Registry ID" oninput="syncFields()">
     <input type="text" id="inName" placeholder="Owner Name" oninput="syncFields()">
-    <input type="text" id="inTitle" placeholder="Asset Title" oninput="syncFields()">
+    <input type="text" id="inTitle" placeholder="Asset Description" oninput="syncFields()">
+    
+    <label style="font-size: 10px; color:#777;">FILE HASH</label>
     <input type="file" id="hashFile" onchange="generateHashFromFile(this)">
+    
+    <label style="font-size: 10px; color:#777;">SIGNATURE</label>
     <input type="file" id="sigFile" onchange="captureSignature(this)">
     
-    <button class="btn-main" onclick="executeFinalization()">Generate PDF</button>
-    <button class="btn-url" onclick="generateClientLink()">Copy Link</button>
-    <hr style="border:0.5px solid #333; width:100%; margin:5px 0;">
+    <button class="btn-main" onclick="executeFinalization()">1. Save & PDF</button>
+    <button class="btn-url" onclick="generateClientLink()">2. Copy Link</button>
+    
+    <hr style="border:0.5px solid #333; width:100%; margin:10px 0;">
     <a id="gmail-link" href="#" class="btn-gmail" onclick="updateMailLink()">✉ Send to Gmail</a>
 </div>
 
 <div class="preview-viewport">
     <div id="certificate-render">
         <div id="tsa-tag" class="tsa-stamp" style="display:none;">✓ TSA VERIFIED</div>
-        <div id="qrcode-wrapper"><div id="qrcode"></div><div style="font-size:7pt; color:#aaa;">VERIFY SYSTEM</div></div>
+        <div id="qrcode-wrapper"><div id="qrcode"></div><div style="font-size:7pt; color:#aaa;">SECURE SCAN</div></div>
+        
         <div class="main-frame">
             <div class="header-title"><h1>Certificate</h1></div>
             <div class="content-area">
                 <div style="font-size: 10pt; color: #888;">REGISTRY NO.</div>
                 <span class="data-box" id="outID">PENDING</span>
                 <div style="font-size: 10pt; color: #888;">ASSET DESCRIPTION</div>
-                <span class="data-box" id="outTitle" style="font-style: italic;">---</span>
+                <span class="data-box" id="outTitle">---</span>
                 <div style="font-size: 10pt; color: #888;">LEGAL OWNER</div>
                 <span class="data-box" id="outName">---</span>
                 
-                <div style="margin-top: 20px; font-size: 11pt;">
+                <div style="margin-top: 25px; font-size: 11pt;">
                     Registry Date: <strong id="outDate">---</strong><br>
-                    <small style="color: #27ae60; font-weight: bold;">Confirmed by BG IP Control (RFC 3161 TSA Protocol)</small>
+                    <small style="color: #27ae60; font-weight: bold;">Confirmed by BG IP Infrastructure</small>
                 </div>
 
-                <div style="background: #fcfcfc; padding: 12px; font-size: 9pt; font-family: monospace; border: 1px solid #eee; margin-top: 25px; text-align: left;">
+                <div style="background: #fcfcfc; padding: 12px; font-size: 9pt; font-family: monospace; border: 1px solid #eee; margin-top: 30px; text-align: left;">
                     <b>SHA-256 DIGITAL FINGERPRINT:</b><br><span id="outHash" style="word-break: break-all;">NOT CALCULATED</span>
                 </div>
             </div>
             <div class="footer-row">
                 <div class="signature-wrap"><canvas id="sig-canvas"></canvas><div style="border-top: 2px solid #111; padding-top: 5px; font-weight: bold; font-size: 11pt;">Authorized Signature</div></div>
-                <div style="font-size: 9pt; color: #777; text-align: right;">Protocol: RFC 3161 Compliant<br>BG IP Control Infrastructure</div>
+                <div style="font-size: 9pt; color: #777; text-align: right;">Protocol: RFC 3161 Compliant<br>BG Digital Vault</div>
             </div>
         </div>
     </div>
@@ -129,26 +132,23 @@
         } else { alert("Access Denied"); }
     }
 
-    const urlParams = new URLSearchParams(window.location.search);
-    if(urlParams.get('view')) {
+    // Проверка режима просмотра
+    const params = new URLSearchParams(window.location.search);
+    if(params.get('view')) {
         document.getElementById('auth-overlay').style.display = 'none';
         document.body.classList.add('client-mode');
-        document.getElementById('outID').innerText = urlParams.get('id') || '';
-        document.getElementById('outName').innerText = urlParams.get('name') || '';
-        document.getElementById('outTitle').innerText = urlParams.get('title') || '';
-        document.getElementById('outHash').innerText = urlParams.get('hash') || '';
-        document.getElementById('outDate').innerText = urlParams.get('date') || '';
+        document.getElementById('outID').innerText = params.get('id') || '';
+        document.getElementById('outName').innerText = params.get('name') || '';
+        document.getElementById('outTitle').innerText = params.get('title') || '';
+        document.getElementById('outHash').innerText = params.get('hash') || '';
+        document.getElementById('outDate').innerText = params.get('date') || '';
         document.getElementById('tsa-tag').style.display = 'block';
         
-        // Восстановление подписи из ссылки для посторонних
-        const sigData = urlParams.get('sig');
-        if(sigData) {
-            drawSignatureFromData(decodeURIComponent(sigData));
-        }
-
-        setTimeout(() => {
+        // Попытка восстановить подпись из кэша (если смотрит владелец)
+        window.onload = () => {
+            drawStoredSignature();
             createQR(window.location.href);
-        }, 500);
+        };
     }
 
     function syncFields() {
@@ -160,57 +160,46 @@
     function createQR(text) {
         const qrDiv = document.getElementById("qrcode");
         qrDiv.innerHTML = "";
-        new QRCode(qrDiv, { text: text, width: 95, height: 95, correctLevel: QRCode.CorrectLevel.M });
+        new QRCode(qrDiv, { text: text, width: 95, height: 95 });
         document.getElementById('qrcode-wrapper').style.display = 'flex';
     }
 
-    function buildLink() {
+    function getCleanLink() {
         const u = window.location.origin + window.location.pathname;
-        let link = u + `?view=true&id=${encodeURIComponent(document.getElementById('outID').innerText)}` +
+        return u + `?view=true&id=${encodeURIComponent(document.getElementById('outID').innerText)}` +
                    `&name=${encodeURIComponent(document.getElementById('outName').innerText)}` +
                    `&title=${encodeURIComponent(document.getElementById('outTitle').innerText)}` +
                    `&hash=${encodeURIComponent(document.getElementById('outHash').innerText)}` +
                    `&date=${encodeURIComponent(document.getElementById('outDate').innerText)}`;
-        
-        // Добавляем саму подпись в ссылку (сжато)
-        const sigData = localStorage.getItem('bg_sig');
-        if(sigData) {
-            link += `&sig=${encodeURIComponent(sigData)}`;
-        }
-        return link;
     }
 
     function executeFinalization() {
         document.getElementById('tsa-tag').style.display = 'block';
-        if(document.getElementById('outDate').innerText === '---') {
-            document.getElementById('outDate').innerText = new Date().toISOString().split('T')[0];
-        }
-        createQR(buildLink());
+        document.getElementById('outDate').innerText = new Date().toISOString().split('T')[0];
+        createQR(getCleanLink());
         
         setTimeout(() => {
             const element = document.getElementById('certificate-render');
             html2pdf().from(element).set({
                 margin: 0,
-                filename: 'IP_Certificate.pdf',
-                html2canvas: { scale: 2, useCORS: true, scrollY: 0 },
+                filename: 'BG_IP_Certificate.pdf',
+                html2canvas: { scale: 2, scrollY: 0 },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
             }).save();
-        }, 800);
+        }, 500);
     }
 
     function generateClientLink() {
-        const l = buildLink();
-        createQR(l);
-        // Проверка на длину ссылки (подпись делает её длинной)
-        if (l.length > 2000) {
-            alert("Warning: Signature is large. The QR might be complex, but the link is copied!");
-        }
-        navigator.clipboard.writeText(l).then(() => alert("Link Copied to Clipboard!"));
+        const link = getCleanLink();
+        navigator.clipboard.writeText(link).then(() => {
+            alert("Link copied! QR updated.");
+            createQR(link);
+        });
     }
 
     function updateMailLink() {
-        const subj = `IP RECORD: ${document.getElementById('outTitle').innerText}`;
-        const body = `Official IP Document\nLink: ${buildLink()}`;
+        const subj = `IP CERTIFICATE: ${document.getElementById('outTitle').innerText}`;
+        const body = `Verified Record for ${document.getElementById('outName').innerText}\nLink: ${getCleanLink()}`;
         document.getElementById('gmail-link').href = `mailto:?subject=${encodeURIComponent(subj)}&body=${encodeURIComponent(body)}`;
     }
 
@@ -232,10 +221,7 @@
 
     function drawStoredSignature() {
         const data = localStorage.getItem('bg_sig');
-        if(data) drawSignatureFromData(data);
-    }
-
-    function drawSignatureFromData(data) {
+        if(!data) return;
         const canvas = document.getElementById('sig-canvas');
         const ctx = canvas.getContext('2d');
         const img = new Image();
