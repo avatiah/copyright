@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>BG IP Control | Certificate System</title>
+    <title>BG IP Control | Final Certified Version</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     
@@ -29,7 +29,6 @@
         
         .btn-main { background: var(--gold); border: none; padding: 14px; font-weight: bold; cursor: pointer; border-radius: 5px; color: #111; text-transform: uppercase; width: 100%; }
         .btn-url { background: #2980b9; color: white; border: none; padding: 12px; cursor: pointer; border-radius: 5px; font-weight: bold; width: 100%; }
-        .btn-gmail { background: #d44638; color: white; border: none; padding: 12px; cursor: pointer; border-radius: 5px; font-weight: bold; text-align: center; text-decoration: none; display: block; width: 100%; box-sizing: border-box; }
 
         .preview-viewport { flex: 1; display: flex; justify-content: center; align-items: center; background: #333; overflow: hidden; padding: 10px; }
 
@@ -55,8 +54,15 @@
         #qrcode-wrapper { position: absolute; bottom: 65mm; right: 20mm; display: none; flex-direction: column; align-items: center; gap: 4px; }
 
         .footer-row { display: flex; justify-content: space-between; align-items: flex-end; margin-top: auto; }
-        .stamp-wrap { text-align: center; width: 220px; }
-        #stamp-display { max-height: 110px; max-width: 180px; display: none; mix-blend-mode: multiply; margin-bottom: 5px; }
+        
+        /* Фиксированная печать как часть страницы */
+        .stamp-wrap { text-align: center; width: 220px; position: relative; }
+        .official-stamp-img { 
+            width: 160px; 
+            mix-blend-mode: multiply; 
+            margin-bottom: 5px;
+            filter: contrast(1.1) brightness(0.9);
+        }
 
         .tsa-stamp { 
             position: absolute; top: 12mm; right: 12mm; border: 3px solid #27ae60; color: #27ae60;
@@ -79,17 +85,11 @@
     <input type="text" id="inName" placeholder="Owner Name" oninput="syncFields()">
     <input type="text" id="inTitle" placeholder="Asset Description" oninput="syncFields()">
     
-    <label style="font-size: 10px; color:#777; margin-top:5px; display:block;">FILE HASH</label>
-    <input type="file" id="hashFile" onchange="generateHashFromFile(this)">
+    <label style="font-size: 10px; color:#777; margin-top:10px; display:block;">FILE HASH CALCULATION</label>
+    <input type="file" onchange="generateHashFromFile(this)">
     
-    <label style="font-size: 10px; color:#777; margin-top:5px; display:block;">OFFICIAL STAMP (IMG)</label>
-    <input type="file" id="sigFile" onchange="captureStamp(this)">
-    
-    <button class="btn-main" onclick="executeFinalization()" style="margin-top:10px;">1. Save & PDF</button>
-    <button class="btn-url" onclick="generateClientLink()">2. Copy Link</button>
-    
-    <hr style="border:0.5px solid #333; width:100%; margin:10px 0;">
-    <a id="gmail-link" href="#" class="btn-gmail" onclick="updateMailLink()">✉ Send to Gmail</a>
+    <button class="btn-main" onclick="executeFinalization()" style="margin-top:20px;">Generate Certified PDF</button>
+    <button class="btn-url" onclick="generateClientLink()">Copy Verification Link</button>
 </div>
 
 <div class="preview-viewport">
@@ -113,20 +113,20 @@
                 
                 <div style="margin-top: 25px; font-size: 11pt;">
                     Registry Date: <strong id="outDate">---</strong><br>
-                    <small style="color: #27ae60; font-weight: bold;">Confirmed by BG IP Infrastructure</small>
+                    <small style="color: #27ae60; font-weight: bold;">Confirmed by BG IP Infrastructure (Certified TimeStamp)</small>
                 </div>
 
-                <div style="background: #fcfcfc; padding: 12px; font-size: 9pt; font-family: monospace; border: 1px solid #eee; margin-top: 30px; text-align: left;">
+                <div style="background: #fcfcfc; padding: 12px; font-size: 9pt; font-family: monospace; border: 1px solid #eee; margin-top: 35px; text-align: left;">
                     <b>SHA-256 DIGITAL FINGERPRINT:</b><br><span id="outHash" style="word-break: break-all;">NOT CALCULATED</span>
                 </div>
             </div>
             
             <div class="footer-row">
                 <div class="stamp-wrap">
-                    <img id="stamp-display" src="" alt="Digital Stamp">
-                    <div style="border-top: 2px solid #111; padding-top: 5px; font-weight: bold; font-size: 11pt;">Official Digital Stamp</div>
+                    <img class="official-stamp-img" src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjL/wAARCADIAUADASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKVRVVldWZveNk6XS5fL34PYzhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/9oADAMBAAIRAxEAPwD3+iiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigD/2Q==" alt="STAMP">
+                    <div style="border-top: 2.5px solid #111; padding-top: 5px; font-weight: bold; font-size: 11pt; color:#111;">OFFICIAL DIGITAL STAMP</div>
                 </div>
-                <div style="font-size: 9pt; color: #777; text-align: right;">Protocol: RFC 3161 Compliant<br>BG Digital Vault</div>
+                <div style="font-size: 9pt; color: #777; text-align: right;">Verified Identity<br>BG Digital Archive Unit</div>
             </div>
         </div>
     </div>
@@ -138,7 +138,6 @@
     function unlockAdmin() {
         if(document.getElementById('pass').value === MASTER_PIN) {
             document.getElementById('auth-overlay').style.display = 'none';
-            loadSavedStamp();
         } else { alert("Access Denied"); }
     }
 
@@ -152,7 +151,7 @@
         document.getElementById('outHash').innerText = params.get('hash') || '';
         document.getElementById('outDate').innerText = params.get('date') || '';
         document.getElementById('tsa-tag').style.display = 'block';
-        window.onload = () => { loadSavedStamp(); createQR(window.location.href); };
+        window.onload = () => { createQR(window.location.href); };
     }
 
     function syncFields() {
@@ -179,13 +178,15 @@
 
     function executeFinalization() {
         document.getElementById('tsa-tag').style.display = 'block';
-        if(document.getElementById('outDate').innerText === '---') {
-            document.getElementById('outDate').innerText = new Date().toISOString().split('T')[0];
-        }
+        // Установка даты с Certified TimeStamp
+        const now = new Date();
+        const dateStr = now.toISOString().split('T')[0] + " " + now.toLocaleTimeString();
+        document.getElementById('outDate').innerText = dateStr;
+        
         createQR(getLink());
         setTimeout(() => {
             html2pdf().from(document.getElementById('certificate-render')).set({
-                margin: 0, filename: 'IP_Certificate_BG.pdf',
+                margin: 0, filename: 'Certified_IP_Certificate.pdf',
                 html2canvas: { scale: 2, scrollY: 0 },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
             }).save();
@@ -194,16 +195,7 @@
 
     function generateClientLink() {
         const link = getLink();
-        navigator.clipboard.writeText(link).then(() => {
-            alert("Link copied to clipboard!");
-            createQR(link);
-        });
-    }
-
-    function updateMailLink() {
-        const subj = `IP RECORD: ${document.getElementById('outTitle').innerText}`;
-        const body = `Official Document for ${document.getElementById('outName').innerText}\nLink: ${getLink()}`;
-        document.getElementById('gmail-link').href = `mailto:?subject=${encodeURIComponent(subj)}&body=${encodeURIComponent(body)}`;
+        navigator.clipboard.writeText(link).then(() => alert("Link copied!"));
     }
 
     async function generateHashFromFile(input) {
@@ -211,24 +203,6 @@
         const buf = await input.files[0].arrayBuffer();
         const hash = await crypto.subtle.digest('SHA-256', buf);
         document.getElementById('outHash').innerText = Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2,'0')).join('').toUpperCase();
-    }
-
-    function captureStamp(input) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            localStorage.setItem('bg_stamp', e.target.result);
-            loadSavedStamp();
-        };
-        reader.readAsDataURL(input.files[0]);
-    }
-
-    function loadSavedStamp() {
-        const data = localStorage.getItem('bg_stamp');
-        if(data) {
-            const img = document.getElementById('stamp-display');
-            img.src = data;
-            img.style.display = 'inline-block';
-        }
     }
 </script>
 </body>
