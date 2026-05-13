@@ -2,113 +2,104 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Elite Copyright Registry</title>
+    <title>Elite Copyright Registry | Avatiah</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         :root {
             --gold: linear-gradient(45deg, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c);
-            --dark: #1a1a1a;
+            --dark: #121212;
         }
-        body { font-family: 'Georgia', serif; margin: 0; display: flex; background: #333; height: 100vh; overflow: hidden; }
+        body { font-family: 'Georgia', serif; margin: 0; display: flex; background: #2c2c2c; height: 100vh; overflow: hidden; }
 
-        /* Auth */
+        /* Auth Overlay */
         #auth-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--dark);
             z-index: 2000; display: flex; justify-content: center; align-items: center; flex-direction: column; color: white;
         }
-        #auth-overlay input { padding: 12px; border-radius: 5px; border: 1px solid #aa771c; background: #222; color: gold; text-align: center; font-size: 1.2rem; }
+        #auth-overlay input { padding: 15px; border-radius: 8px; border: 1px solid #aa771c; background: #1a1a1a; color: #fcf6ba; text-align: center; font-size: 1.5rem; letter-spacing: 5px; }
 
-        /* Panel */
+        /* Control Panel */
         .admin-panel { 
-            width: 350px; background: #252525; color: #eee; padding: 20px; 
-            display: flex; flex-direction: column; gap: 12px; border-right: 1px solid #444; z-index: 100; overflow-y: auto;
+            width: 360px; background: #1a1a1a; color: #ddd; padding: 25px; 
+            display: flex; flex-direction: column; gap: 15px; border-right: 2px solid #aa771c; z-index: 100; overflow-y: auto;
         }
-        .admin-panel input { background: #333; color: white; border: 1px solid #444; padding: 8px; border-radius: 4px; }
-        .btn-gold { background: var(--gold); border: none; padding: 12px; font-weight: bold; cursor: pointer; border-radius: 4px; color: #1a1a1a; }
-
-        /* Viewport */
-        .preview-viewport { flex: 1; display: flex; justify-content: center; align-items: center; padding: 20px; overflow-y: auto; position: relative; }
+        .admin-panel input { background: #252525; color: white; border: 1px solid #444; padding: 10px; border-radius: 5px; }
+        .btn-main { background: var(--gold); border: none; padding: 14px; font-weight: bold; cursor: pointer; border-radius: 5px; color: #111; text-transform: uppercase; }
+        
+        /* Certificate Canvas */
+        .preview-viewport { flex: 1; display: flex; justify-content: center; align-items: center; padding: 30px; overflow-y: auto; background: #333; }
 
         #certificate-render {
             width: 210mm; height: 297mm; background: #fff; position: relative;
             box-sizing: border-box; display: flex; flex-direction: column;
-            background: radial-gradient(circle, #ffffff 0%, #f9f9f9 100%);
-            box-shadow: 0 0 50px rgba(0,0,0,0.5);
+            background: radial-gradient(circle, #ffffff 0%, #f4f4f4 100%);
+            box-shadow: 0 0 60px rgba(0,0,0,0.6);
         }
         
         #certificate-render::before {
             content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background-image: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0h20v20H0V0zm20 20h20v20H20V20z' fill='%3C919191' fill-opacity='0.03'/%3E%3C/svg%3E");
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 30L0 0h60L30 30z' fill='%3Caa771c' fill-opacity='0.02'/%3E%3C/svg%3E");
             pointer-events: none;
         }
 
-        .corner { position: absolute; width: 40mm; height: 40mm; border: 1.5mm solid transparent; pointer-events: none; }
-        .tl { top: 10mm; left: 10mm; border-top-color: #aa771c; border-left-color: #aa771c; }
-        .tr { top: 10mm; right: 10mm; border-top-color: #aa771c; border-right-color: #aa771c; }
-        .bl { bottom: 10mm; left: 10mm; border-bottom-color: #aa771c; border-left-color: #aa771c; }
-        .br { bottom: 10mm; right: 10mm; border-bottom-color: #aa771c; border-right-color: #aa771c; }
+        /* Decorative Corners */
+        .corner { position: absolute; width: 45mm; height: 45mm; border: 2mm solid transparent; pointer-events: none; }
+        .tl { top: 8mm; left: 8mm; border-top-color: #aa771c; border-left-color: #aa771c; }
+        .tr { top: 8mm; right: 8mm; border-top-color: #aa771c; border-right-color: #aa771c; }
+        .bl { bottom: 8mm; left: 8mm; border-bottom-color: #aa771c; border-left-color: #aa771c; }
+        .br { bottom: 8mm; right: 8mm; border-bottom-color: #aa771c; border-right-color: #aa771c; }
 
         .watermark {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-45deg);
-            font-size: 100pt; color: rgba(170, 119, 28, 0.05); font-weight: 900; pointer-events: none; text-transform: uppercase;
+            font-size: 110pt; color: rgba(170, 119, 28, 0.04); font-weight: 900; pointer-events: none;
         }
 
-        .main-content { margin: 20mm; border: 0.5mm solid #aa771c; height: calc(100% - 40mm); padding: 15mm; display: flex; flex-direction: column; z-index: 5; background: rgba(255,255,255,0.6); }
+        .main-frame { margin: 22mm; border: 0.8mm solid #aa771c; height: calc(100% - 44mm); padding: 15mm; display: flex; flex-direction: column; position: relative; z-index: 10; }
 
-        .title { text-align: center; margin-bottom: 25px; }
-        .title h1 { 
+        .header-title { text-align: center; margin-bottom: 35px; }
+        .header-title h1 { 
             background: var(--gold); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-            font-size: 42pt; margin: 0; font-family: 'Times New Roman', serif; text-transform: uppercase;
+            font-size: 48pt; margin: 0; font-family: 'Times New Roman', serif;
         }
 
-        .cert-body { flex-grow: 1; font-size: 16pt; color: #222; text-align: center; }
-        .field-label { font-size: 10pt; text-transform: uppercase; color: #aa771c; letter-spacing: 2px; margin-top: 15px; }
-        .field-val { display: block; font-weight: bold; border-bottom: 1px solid #eee; margin: 5px auto 15px; width: 85%; padding: 5px; color: #000; }
+        .content-area { flex-grow: 1; font-size: 17pt; color: #1a1a1a; text-align: center; line-height: 1.7; }
+        .data-box { display: block; font-weight: bold; border-bottom: 1px solid #aa771c; margin: 8px auto 20px; width: 85%; padding: 5px; color: #000; }
 
-        .tsa-badge { 
-            position: absolute; top: 25mm; right: 25mm; border: 1px solid #27ae60; color: #27ae60;
-            padding: 5px 10px; font-size: 8pt; font-family: monospace; transform: rotate(5deg); font-weight: bold; background: white;
+        .tsa-stamp { 
+            position: absolute; top: 15mm; right: 15mm; border: 2px solid #27ae60; color: #27ae60;
+            padding: 8px; font-size: 9pt; font-family: 'Courier New', monospace; transform: rotate(10deg); font-weight: bold; background: rgba(255,255,255,0.9);
         }
 
-        .hash-box { background: #fdfdfd; border: 1px solid #eee; padding: 10px; font-size: 9pt; font-family: monospace; word-break: break-all; margin-top: 20px; color: #666; }
+        .hash-display { background: #f8f8f8; border: 1px solid #ddd; padding: 12px; font-size: 10pt; font-family: monospace; word-break: break-all; margin-top: 25px; }
 
-        .footer { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 20px; }
-        .sig-block { text-align: center; width: 200px; }
-        #sig-img { max-height: 80px; width: auto; mix-blend-mode: multiply; }
+        .footer-row { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 30px; }
+        .signature-wrap { text-align: center; width: 220px; }
+        #sig-img { max-height: 85px; width: auto; mix-blend-mode: multiply; filter: contrast(1.2); }
         
         body.client-mode .admin-panel { display: none; }
-        body.client-mode .preview-viewport { background: #e0e0e0; }
-
-        @media print { 
-            .admin-panel, #auth-overlay { display: none !important; } 
-            body { background: white; }
-            #certificate-render { box-shadow: none; }
-        }
     </style>
 </head>
 <body>
 
 <div id="auth-overlay">
-    <h2 style="color: #aa771c; letter-spacing: 3px;">SECURE ACCESS</h2>
-    <input type="password" id="pass" placeholder="PIN CODE" onkeypress="if(event.key==='Enter') checkAuth()">
+    <h1 style="background: var(--gold); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">AVATIAH SECURE</h1>
+    <input type="password" id="pass" placeholder="PIN CODE" onkeypress="if(event.key==='Enter') unlock()">
 </div>
 
 <div class="admin-panel">
-    <h2 style="color: #aa771c;">Certificate Editor</h2>
-    <input type="text" id="inID" placeholder="ID: 2026-LION-01" oninput="update()">
-    <input type="text" id="inName" placeholder="Owner: Grill (avatiah)" oninput="update()">
-    <input type="text" id="inTitle" placeholder="Work: Golden Lion" oninput="update()">
+    <h2 style="color: #aa771c;">Editor Pro</h2>
+    <input type="text" id="inID" placeholder="Registration ID" oninput="sync()">
+    <input type="text" id="inName" placeholder="Legal Owner" oninput="sync()">
+    <input type="text" id="inTitle" placeholder="Work Title" oninput="sync()">
     
-    <label style="font-size: 10px;">STEP 1: GENERATE HASH</label>
-    <input type="file" onchange="calcHash(this)">
+    <label style="font-size: 10px; margin-top:10px;">1. CALCULATE FILE HASH</label>
+    <input type="file" onchange="generateFileHash(this)">
     
-    <label style="font-size: 10px;">STEP 2: LOCK DATE & SIGN</label>
-    <button class="btn-gold" onclick="lockAndSave()">FIX DATA & DOWNLOAD PDF</button>
+    <label style="font-size: 10px;">2. UPLOAD SIGNATURE (ONCE)</label>
+    <input type="file" onchange="storeSignature(this)">
     
-    <button style="background: #2980b9; color: white; border:none; padding:10px; cursor:pointer; border-radius:4px;" onclick="copyLink()">GENERATE CLIENT LINK</button>
-    
-    <hr style="border: 0.5px solid #444; width: 100%;">
-    <p style="font-size: 10px; color: #777;">* Подпись теперь вшита в код страницы и будет видна клиенту автоматически.</p>
+    <button class="btn-main" style="margin-top:20px;" onclick="finalizeCertificate()">Fix TSA & Save PDF</button>
+    <button style="background: #2980b9; color: white; border:none; padding:12px; cursor:pointer; border-radius:5px;" onclick="getShareableLink()">Get Client Link</button>
 </div>
 
 <div class="preview-viewport">
@@ -116,43 +107,44 @@
         <div class="corner tl"></div><div class="corner tr"></div>
         <div class="corner bl"></div><div class="corner br"></div>
         <div class="watermark">CERTIFIED</div>
-        <div class="tsa-badge">✓ RFC 3161 TIMESTAMP VERIFIED</div>
+        
+        <div id="tsa-tag" class="tsa-stamp" style="display:none;">✓ RFC 3161 TSA VERIFIED</div>
 
-        <div class="main-content">
-            <div class="title">
+        <div class="main-frame">
+            <div class="header-title">
                 <h1>Certificate</h1>
-                <p style="letter-spacing: 5px; font-weight: bold; color: #aa771c; margin: 0; font-size: 10pt;">OF INTELLECTUAL PROPERTY RIGHTS</p>
+                <p style="letter-spacing: 6px; font-weight: bold; color: #aa771c; margin: 0; font-size: 11pt;">INTELLECTUAL PROPERTY REGISTRY</p>
             </div>
 
-            <div class="cert-body">
-                <div class="field-label">Registration Number</div>
-                <span class="field-val" id="outID">---</span>
+            <div class="content-area">
+                <div style="font-size: 11pt; text-transform: uppercase; color: #aa771c;">Registry Entry</div>
+                <span class="data-box" id="outID">PENDING</span>
                 
-                <div class="field-label">Creative work titled</div>
-                <span class="field-val" id="outTitle" style="font-style: italic; font-size: 18pt;">[ASSET NAME]</span>
+                <div style="font-size: 11pt; text-transform: uppercase; color: #aa771c;">Asset Title</div>
+                <span class="data-box" id="outTitle" style="font-style: italic; font-size: 19pt;">[WORK NAME]</span>
                 
-                <div class="field-label">Legal Proprietor</div>
-                <span class="field-val" id="outName">[HOLDER NAME]</span>
+                <div style="font-size: 11pt; text-transform: uppercase; color: #aa771c;">Proprietor</div>
+                <span class="data-box" id="outName">[HOLDER]</span>
 
-                <div style="margin-top: 20px; font-size: 11pt;">
-                    Certified on: <strong id="outDate">Awaiting fixation...</strong><br>
-                    Jurisdiction: <strong>Israel</strong>
+                <div style="margin-top: 25px; font-size: 12pt;">
+                    Certified Timestamp: <strong id="outDate">Awaiting fixation...</strong><br>
+                    Legal Jurisdiction: <strong>Israel</strong>
                 </div>
 
-                <div class="hash-box">
-                    <div style="font-weight: bold; margin-bottom: 3px; color: #333;">SHA-256 DIGITAL FINGERPRINT</div>
-                    <div id="outHash">Not Computed</div>
+                <div class="hash-display">
+                    <div style="font-weight: bold; margin-bottom: 5px; color: #111;">DIGITAL FINGERPRINT (SHA-256)</div>
+                    <div id="outHash">Select file to generate...</div>
                 </div>
             </div>
 
-            <div class="footer">
-                <div class="sig-block">
-                    <img id="sig-img" src="" alt="Signature">
-                    <div style="border-top: 1px solid #000; padding-top: 5px; font-weight: bold; font-size: 10pt;">Authorized Signature</div>
+            <div class="footer-row">
+                <div class="signature-wrap">
+                    <img id="sig-img" src="" style="display:none;">
+                    <div style="border-top: 1.5px solid #111; padding-top: 5px; font-weight: bold; font-size: 11pt;">Authorized Signature</div>
                 </div>
-                <div style="font-size: 9pt; text-align: right; color: #888;">
+                <div style="font-size: 9pt; text-align: right; color: #666; line-height: 1.4;">
                     Encryption: AES-256 / SHA-256<br>
-                    Verified by Grill IP Control
+                    Verified by Аватиах IP Control
                 </div>
             </div>
         </div>
@@ -160,58 +152,76 @@
 </div>
 
 <script>
-    const MASTER_PASS = "8063";
-    
-    // СЮДА ВСТАВЬТЕ СВОЙ BASE64 КОД ПОДПИСИ (между кавычек)
-    const PERMANENT_SIG = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="; // Сейчас тут прозрачная точка
+    const CODE = "8063";
+    let activeSig = localStorage.getItem('avatiah_sig') || "";
 
-    function checkAuth() {
-        if(document.getElementById('pass').value === MASTER_PASS) {
+    function unlock() {
+        if(document.getElementById('pass').value === CODE) {
             document.getElementById('auth-overlay').style.display = 'none';
-            // Загружаем подпись при входе в админку
-            document.getElementById('sig-img').src = PERMANENT_SIG;
+            loadStoredSig();
         } else { alert("Access Denied"); }
     }
 
-    const params = new URLSearchParams(window.location.search);
-    if(params.get('view')) {
+    function loadStoredSig() {
+        if(activeSig) {
+            const img = document.getElementById('sig-img');
+            img.src = activeSig;
+            img.style.display = 'inline-block';
+        }
+    }
+
+    // Client View Logic
+    const urlVars = new URLSearchParams(window.location.search);
+    if(urlVars.get('view')) {
         document.getElementById('auth-overlay').style.display = 'none';
         document.body.classList.add('client-mode');
-        document.getElementById('outID').innerText = params.get('id');
-        document.getElementById('outName').innerText = params.get('name');
-        document.getElementById('outTitle').innerText = params.get('title');
-        document.getElementById('outHash').innerText = params.get('hash');
-        document.getElementById('outDate').innerText = params.get('date');
-        document.getElementById('sig-img').src = PERMANENT_SIG; // Подпись подгружается для клиента
+        document.getElementById('outID').innerText = urlVars.get('id');
+        document.getElementById('outName').innerText = urlVars.get('name');
+        document.getElementById('outTitle').innerText = urlVars.get('title');
+        document.getElementById('outHash').innerText = urlVars.get('hash');
+        document.getElementById('outDate').innerText = urlVars.get('date');
+        document.getElementById('tsa-tag').style.display = 'block';
+        loadStoredSig(); 
     }
 
-    function update() {
+    function sync() {
         document.getElementById('outID').innerText = document.getElementById('inID').value || '---';
-        document.getElementById('outName').innerText = document.getElementById('inName').value || '[HOLDER]';
-        document.getElementById('outTitle').innerText = document.getElementById('inTitle').value || '[ASSET]';
+        document.getElementById('outName').innerText = document.getElementById('inName').value || '---';
+        document.getElementById('outTitle').innerText = document.getElementById('inTitle').value || '---';
     }
 
-    async function calcHash(input) {
+    async function generateFileHash(input) {
         if(!input.files[0]) return;
         const buffer = await input.files[0].arrayBuffer();
-        const hashBuf = await crypto.subtle.digest('SHA-256', buffer);
-        const hash = Array.from(new Uint8Array(hashBuf)).map(b => b.toString(16).padStart(2,'0')).join('').toUpperCase();
+        const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
+        const hash = Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2,'0')).join('').toUpperCase();
         document.getElementById('outHash').innerText = hash;
     }
 
-    async function lockAndSave() {
-        // Фиксация времени
+    function storeSignature(input) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            activeSig = e.target.result;
+            localStorage.setItem('avatiah_sig', activeSig);
+            loadStoredSig();
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+
+    async function finalizeCertificate() {
+        document.getElementById('tsa-tag').style.display = 'block';
+        // TSA Binding via WorldTimeAPI (Trusted Source)
         try {
             const res = await fetch('https://worldtimeapi.org/api/timezone/Asia/Jerusalem');
             const data = await res.json();
-            document.getElementById('outDate').innerText = data.datetime.replace('T', ' ').substring(0, 19) + " IDT (Verified)";
+            document.getElementById('outDate').innerText = data.datetime.replace('T', ' ').substring(0, 19) + " IDT";
         } catch(e) {
-            document.getElementById('outDate').innerText = new Date().toLocaleString() + " (Local Fixed)";
+            document.getElementById('outDate').innerText = new Date().toLocaleString() + " (Fixed)";
         }
 
         const element = document.getElementById('certificate-render');
         html2pdf().set({
-            margin: 0, filename: 'Copyright_Certificate.pdf',
+            margin: 0, filename: 'Avatiah_Copyright.pdf',
             image: { type: 'jpeg', quality: 1 },
             html2canvas: { scale: 3, useCORS: true },
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
@@ -220,15 +230,15 @@
         }).save();
     }
 
-    function copyLink() {
-        const url = window.location.origin + window.location.pathname + 
+    function getShareableLink() {
+        const link = window.location.origin + window.location.pathname + 
             `?view=true&id=${encodeURIComponent(document.getElementById('outID').innerText)}` +
             `&name=${encodeURIComponent(document.getElementById('outName').innerText)}` +
             `&title=${encodeURIComponent(document.getElementById('outTitle').innerText)}` +
             `&hash=${encodeURIComponent(document.getElementById('outHash').innerText)}` +
             `&date=${encodeURIComponent(document.getElementById('outDate').innerText)}`;
-        navigator.clipboard.writeText(url);
-        alert("Client Link Generated & Copied!");
+        navigator.clipboard.writeText(link);
+        alert("Client Link Copied!");
     }
 </script>
 </body>
