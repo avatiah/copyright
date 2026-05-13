@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>BG IP Control | Final Certified Version</title>
+    <title>BG IP Control | Certified System</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     
@@ -29,6 +29,7 @@
         
         .btn-main { background: var(--gold); border: none; padding: 14px; font-weight: bold; cursor: pointer; border-radius: 5px; color: #111; text-transform: uppercase; width: 100%; }
         .btn-url { background: #2980b9; color: white; border: none; padding: 12px; cursor: pointer; border-radius: 5px; font-weight: bold; width: 100%; }
+        .btn-gmail { background: #d44638; color: white; border: none; padding: 12px; cursor: pointer; border-radius: 5px; font-weight: bold; text-align: center; text-decoration: none; display: block; width: 100%; box-sizing: border-box; }
 
         .preview-viewport { flex: 1; display: flex; justify-content: center; align-items: center; background: #333; overflow: hidden; padding: 10px; }
 
@@ -55,7 +56,6 @@
 
         .footer-row { display: flex; justify-content: space-between; align-items: flex-end; margin-top: auto; }
         
-        /* Фиксированная печать как часть страницы */
         .stamp-wrap { text-align: center; width: 220px; position: relative; }
         .official-stamp-img { 
             width: 160px; 
@@ -85,11 +85,13 @@
     <input type="text" id="inName" placeholder="Owner Name" oninput="syncFields()">
     <input type="text" id="inTitle" placeholder="Asset Description" oninput="syncFields()">
     
-    <label style="font-size: 10px; color:#777; margin-top:10px; display:block;">FILE HASH CALCULATION</label>
+    <label style="font-size: 10px; color:#777; margin-top:10px; display:block;">FILE HASH</label>
     <input type="file" onchange="generateHashFromFile(this)">
     
-    <button class="btn-main" onclick="executeFinalization()" style="margin-top:20px;">Generate Certified PDF</button>
-    <button class="btn-url" onclick="generateClientLink()">Copy Verification Link</button>
+    <button class="btn-main" onclick="executeFinalization()" style="margin-top:20px;">1. Generate PDF</button>
+    <button class="btn-url" onclick="generateClientLink()">2. Copy Link</button>
+    <hr style="border:0.5px solid #333; width:100%; margin:10px 0;">
+    <a id="gmail-link" href="#" class="btn-gmail" onclick="updateMailLink()">✉ Send to Gmail</a>
 </div>
 
 <div class="preview-viewport">
@@ -113,7 +115,7 @@
                 
                 <div style="margin-top: 25px; font-size: 11pt;">
                     Registry Date: <strong id="outDate">---</strong><br>
-                    <small style="color: #27ae60; font-weight: bold;">Confirmed by BG IP Infrastructure (Certified TimeStamp)</small>
+                    <small style="color: #27ae60; font-weight: bold;">Certified TimeStamp: Confirmed by BG IP Infrastructure</small>
                 </div>
 
                 <div style="background: #fcfcfc; padding: 12px; font-size: 9pt; font-family: monospace; border: 1px solid #eee; margin-top: 35px; text-align: left;">
@@ -123,8 +125,8 @@
             
             <div class="footer-row">
                 <div class="stamp-wrap">
-                    <img class="official-stamp-img" src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjL/wAARCADIAUADASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKVRVVldWZveNk6XS5fL34PYzhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/9oADAMBAAIRAxEAPwD3+iiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigD/2Q==" alt="STAMP">
-                    <div style="border-top: 2.5px solid #111; padding-top: 5px; font-weight: bold; font-size: 11pt; color:#111;">OFFICIAL DIGITAL STAMP</div>
+                    <img class="official-stamp-img" src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjL/wAARCADIAUADASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKVRVVldWZveNk6XS5fL34PYzhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/9oADAMBAAIRAxEAPwD3+iiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigD/2Q==" alt="OFFICIAL STAMP">
+                    <div style="border-top: 2px solid #111; padding-top: 5px; font-weight: bold; font-size: 11pt; color:#111;">OFFICIAL DIGITAL STAMP</div>
                 </div>
                 <div style="font-size: 9pt; color: #777; text-align: right;">Verified Identity<br>BG Digital Archive Unit</div>
             </div>
@@ -178,9 +180,8 @@
 
     function executeFinalization() {
         document.getElementById('tsa-tag').style.display = 'block';
-        // Установка даты с Certified TimeStamp
         const now = new Date();
-        const dateStr = now.toISOString().split('T')[0] + " " + now.toLocaleTimeString();
+        const dateStr = now.toLocaleDateString() + " " + now.toLocaleTimeString();
         document.getElementById('outDate').innerText = dateStr;
         
         createQR(getLink());
@@ -195,7 +196,16 @@
 
     function generateClientLink() {
         const link = getLink();
-        navigator.clipboard.writeText(link).then(() => alert("Link copied!"));
+        navigator.clipboard.writeText(link).then(() => {
+            alert("Verification Link copied!");
+            createQR(link);
+        });
+    }
+
+    function updateMailLink() {
+        const subj = `IP RECORD: ${document.getElementById('outTitle').innerText}`;
+        const body = `Official Certified Document\nOwner: ${document.getElementById('outName').innerText}\nLink: ${getLink()}`;
+        document.getElementById('gmail-link').href = `mailto:?subject=${encodeURIComponent(subj)}&body=${encodeURIComponent(body)}`;
     }
 
     async function generateHashFromFile(input) {
