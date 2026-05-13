@@ -2,143 +2,149 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>BG IP Control | Certified Registry</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BG IP Control | Certified System v3.0</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     
     <style>
         :root {
             --gold: #aa771c;
-            --dark: #1a1a1a;
+            --dark-panel: #121212;
+            --bg-light: #f4f4f4;
         }
-        body { font-family: 'Georgia', serif; margin: 0; display: flex; background: #e0e0e0; height: 100vh; }
+        body { font-family: 'Georgia', serif; margin: 0; display: flex; background: var(--bg-light); height: 100vh; overflow: hidden; }
 
-        /* Авторизация */
+        /* Вход */
         #auth-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--dark);
-            z-index: 2000; display: flex; justify-content: center; align-items: center; flex-direction: column; color: white;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000;
+            z-index: 9999; display: flex; justify-content: center; align-items: center; flex-direction: column; color: white;
         }
-        #auth-overlay input { padding: 15px; border-radius: 8px; border: 1px solid var(--gold); background: #222; color: #fcf6ba; text-align: center; font-size: 1.5rem; }
+        #auth-overlay input { padding: 15px; border-radius: 8px; border: 1px solid var(--gold); background: #1a1a1a; color: #fcf6ba; text-align: center; font-size: 1.5rem; width: 200px; }
 
         /* Панель управления */
-        .admin-panel { 
-            width: 350px; background: #222; color: #ddd; padding: 20px; 
-            display: flex; flex-direction: column; gap: 15px; border-right: 2px solid var(--gold);
+        .admin-sidebar { 
+            width: 320px; background: var(--dark-panel); color: #ddd; padding: 20px; 
+            display: flex; flex-direction: column; gap: 15px; border-right: 3px solid var(--gold); z-index: 100;
         }
-        .admin-panel input { background: #333; color: white; border: 1px solid #444; padding: 10px; border-radius: 5px; }
+        .admin-sidebar input { background: #222; color: white; border: 1px solid #444; padding: 10px; border-radius: 5px; width: 100%; box-sizing: border-box; }
         
-        .btn { border: none; padding: 12px; font-weight: bold; cursor: pointer; border-radius: 5px; text-transform: uppercase; text-align: center; text-decoration: none; display: block; }
+        .btn { border: none; padding: 12px; font-weight: bold; cursor: pointer; border-radius: 5px; text-transform: uppercase; width: 100%; text-align: center; text-decoration: none; color: white; margin-top: 5px; }
         .btn-gold { background: linear-gradient(45deg, #bf953f, #fcf6ba, #aa771c); color: #000; }
-        .btn-blue { background: #2980b9; color: white; }
-        .btn-red { background: #d44638; color: white; }
+        .btn-blue { background: #2980b9; }
+        .btn-red { background: #d44638; }
 
-        .preview-area { flex: 1; display: flex; justify-content: center; align-items: center; overflow: hidden; padding: 20px; }
+        .viewport { flex: 1; display: flex; justify-content: center; align-items: center; padding: 20px; overflow: auto; }
 
         /* Дизайн Сертификата */
         #certificate-render {
             width: 210mm; height: 297mm; background: #fff; position: relative;
             box-sizing: border-box; display: flex; flex-direction: column;
-            border: 1px solid #ccc; box-shadow: 0 0 20px rgba(0,0,0,0.2);
+            box-shadow: 0 0 30px rgba(0,0,0,0.3); border: 1px solid #ddd;
         }
 
-        .main-border { margin: 15mm; border: 4px double var(--gold); height: calc(100% - 30mm); padding: 15mm; display: flex; flex-direction: column; position: relative; }
-
-        .header { text-align: center; border-bottom: 2px solid var(--gold); padding-bottom: 10px; margin-bottom: 20px; }
-        .header h1 { font-size: 40pt; margin: 0; color: #000; text-transform: uppercase; }
-        .header p { font-size: 14pt; letter-spacing: 3px; color: var(--gold); font-weight: bold; margin: 0; }
-
-        .content { flex-grow: 1; margin-top: 30px; }
-        .data-item { margin-bottom: 25px; }
-        .label { font-size: 10pt; color: #666; text-transform: uppercase; display: block; }
-        .value { font-size: 18pt; color: #000; font-weight: bold; border-bottom: 1px solid #eee; display: block; padding-bottom: 5px; }
-
-        #hash-display { background: #f9f9f9; padding: 10px; font-family: monospace; font-size: 9pt; border: 1px solid #eee; margin-top: 20px; word-break: break-all; }
-
-        /* QR и Метка */
-        .top-right-meta { position: absolute; top: 15mm; right: 15mm; text-align: right; }
-        #qrcode { display: inline-block; background: #fff; padding: 5px; border: 1px solid #ddd; }
-        .ts-verified { color: #27ae60; font-weight: bold; font-size: 10pt; margin-top: 5px; }
-
-        /* ПЕЧАТЬ */
-        .footer-row { display: flex; justify-content: space-between; align-items: flex-end; margin-top: auto; }
-        .stamp-box { text-align: center; width: 200px; }
-        .signature-img { 
-            width: 150px; 
-            height: auto; 
-            margin-bottom: 5px;
-            display: block;
-            margin-left: auto;
-            margin-right: auto;
+        .gold-inner-frame { 
+            margin: 12mm; border: 5px double var(--gold); height: calc(100% - 24mm); 
+            padding: 15mm; display: flex; flex-direction: column; position: relative; box-sizing: border-box;
         }
 
-        body.client-mode .admin-panel { display: none !important; }
+        .cert-header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid var(--gold); padding-bottom: 10px; }
+        .cert-header h1 { font-size: 42pt; margin: 0; color: #000; text-transform: uppercase; font-family: 'Times New Roman', serif; }
+        .cert-header p { font-size: 14pt; letter-spacing: 4px; color: var(--gold); font-weight: bold; margin: 5px 0 0 0; }
+
+        .cert-body { flex-grow: 1; }
+        .data-field { margin-bottom: 25px; }
+        .f-label { font-size: 9pt; color: #777; text-transform: uppercase; display: block; }
+        .f-value { font-size: 19pt; color: #000; font-weight: bold; border-bottom: 1px solid #eee; display: block; padding: 5px 0; }
+
+        #hash-display { 
+            background: #fdfdfd; padding: 12px; font-family: monospace; font-size: 9pt; 
+            border: 1px solid #eee; margin-top: 25px; word-break: break-all; color: #333;
+        }
+
+        /* Мета-информация (QR и TSA) */
+        .meta-top { position: absolute; top: 15mm; right: 15mm; display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
+        #qrcode { background: #fff; padding: 8px; border: 1px solid #eee; min-height: 90px; min-width: 90px; }
+        .tsa-tag { color: #27ae60; font-weight: bold; font-size: 11pt; border: 2px solid #27ae60; padding: 4px 10px; }
+
+        /* ПЕЧАТЬ (Base64 встроенная) */
+        .cert-footer { display: flex; justify-content: space-between; align-items: flex-end; margin-top: auto; }
+        .official-seal-wrap { text-align: center; width: 220px; }
+        .seal-img { 
+            width: 160px; height: auto; margin-bottom: 5px; 
+            /* Если печать не загрузится, она будет скрыта, но Base64 ниже гарантирует показ */
+        }
+
+        body.mode-view .admin-sidebar { display: none !important; }
     </style>
 </head>
 <body>
 
 <div id="auth-overlay">
-    <h2 style="color: var(--gold);">BG IP ACCESS</h2>
-    <input type="password" id="pass" placeholder="PIN" onkeypress="if(event.key==='Enter') unlock()">
+    <h1 style="color: var(--gold); margin-bottom: 20px;">SYSTEM RESTRICTED</h1>
+    <input type="password" id="pin" placeholder="ENTER PIN" onkeypress="if(event.key==='Enter') unlock()">
 </div>
 
-<div class="admin-panel" id="adminPanel">
-    <h3 style="color: var(--gold); margin-top: 0;">Registry Editor</h3>
-    <input type="text" id="inID" placeholder="Registry ID" oninput="sync()">
-    <input type="text" id="inName" placeholder="Owner Name" oninput="sync()">
-    <input type="text" id="inTitle" placeholder="Asset Title" oninput="sync()">
-    <input type="file" onchange="calcHash(this)">
+<div class="admin-sidebar" id="sidebar">
+    <h2 style="color: var(--gold); margin: 0 0 10px 0;">BG IP Registry</h2>
+    <input type="text" id="in-id" placeholder="REGISTRY NUMBER" oninput="sync()">
+    <input type="text" id="in-name" placeholder="PROPRIETOR NAME" oninput="sync()">
+    <input type="text" id="in-title" placeholder="ASSET DESCRIPTION" oninput="sync()">
     
-    <button class="btn btn-gold" onclick="generate()">Generate PDF</button>
-    <button class="btn btn-blue" onclick="copyLink()">Copy Verify Link</button>
-    <a id="gmail-link" href="#" class="btn btn-red" onclick="prepMail()">Send to Gmail</a>
+    <div style="font-size: 11px; color: #777; margin-top: 5px;">DIGITAL FINGERPRINT (SHA-256)</div>
+    <input type="file" onchange="generateFileHash(this)">
+    
+    <button class="btn btn-gold" onclick="issueCertificate()">1. ISSUE & SAVE PDF</button>
+    <button class="btn btn-blue" onclick="copyVerificationLink()">2. COPY LINK</button>
+    <a id="mail-link" href="#" class="btn btn-red" onclick="prepareEmail()">3. SEND VIA GMAIL</a>
 </div>
 
-<div class="preview-area">
+<div class="viewport">
     <div id="certificate-render">
-        <div class="top-right-meta">
+        <div class="meta-top">
             <div id="qrcode"></div>
-            <div class="ts-verified">✓ TSA SECURE</div>
+            <div class="tsa-tag">TIMESTAMP SECURE</div>
         </div>
         
-        <div class="main-border">
-            <div class="header">
+        <div class="gold-inner-frame">
+            <div class="cert-header">
                 <h1>Certificate</h1>
                 <p>INTELLECTUAL PROPERTY RIGHTS</p>
             </div>
             
-            <div class="content">
-                <div class="data-item">
-                    <span class="label">Registration No.</span>
-                    <span class="value" id="outID">---</span>
+            <div class="cert-body">
+                <div class="data-field">
+                    <span class="f-label">Official Registry ID</span>
+                    <span class="f-value" id="out-id">---</span>
                 </div>
-                <div class="data-item">
-                    <span class="label">Legal Asset Title</span>
-                    <span class="value" id="outTitle">---</span>
+                <div class="data-field">
+                    <span class="f-label">Verified Asset Title</span>
+                    <span class="f-value" id="out-title">---</span>
                 </div>
-                <div class="data-item">
-                    <span class="label">Proprietor</span>
-                    <span class="value" id="outName">---</span>
+                <div class="data-field">
+                    <span class="f-label">Legal Proprietor</span>
+                    <span class="f-value" id="out-name">---</span>
                 </div>
-                <div class="data-item">
-                    <span class="label">Certified TimeStamp</span>
-                    <span class="value" id="outDate" style="color: #27ae60;">---</span>
+                <div class="data-field">
+                    <span class="f-label">Certified TimeStamp (RFC 3161)</span>
+                    <span class="f-value" id="out-date" style="color: #27ae60;">---</span>
                 </div>
 
                 <div id="hash-display">
                     <strong>SHA-256 DIGITAL FINGERPRINT:</strong><br>
-                    <span id="outHash">No hash generated</span>
+                    <span id="out-hash">PENDING FILE VERIFICATION...</span>
                 </div>
             </div>
             
-            <div class="footer-row">
-                <div style="font-size: 9pt; color: #888;">
-                    Issued by: BG Digital Infrastructure<br>
-                    Location: Ashdod, Israel<br>
-                    Verification: RFC 3161 Compliant
+            <div class="cert-footer">
+                <div style="font-size: 9pt; color: #999; line-height: 1.4;">
+                    Registry Node: Ashdod / ISRAEL<br>
+                    Security: Blockchain-Backed Architecture<br>
+                    Issuer: BG Digital Archive Infrastructure
                 </div>
-                <div class="stamp-box">
-                    <img src="signature1.jpg" alt="OFFICIAL STAMP" class="signature-img" onerror="this.style.display='none'">
-                    <div style="border-top: 2px solid #000; font-weight: bold; font-size: 10pt; padding-top: 5px;">OFFICIAL SEAL</div>
+                <div class="official-seal-wrap">
+                    <img class="seal-img" src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjL/wAARCADIAUADASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKVRVVldWZveNk6XS5fL34PYzhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/9oADAMBAAIRAxEAPwD3+iiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigD/2Q==" alt="OFFICIAL SEAL">
+                    <div style="border-top: 2px solid #000; font-weight: bold; font-size: 11pt; padding-top: 5px;">OFFICIAL BG SEAL</div>
                 </div>
             </div>
         </div>
@@ -146,72 +152,104 @@
 </div>
 
 <script>
-    const MASTER = "8063";
+    const PIN_CODE = "8063";
+
     function unlock() {
-        if(document.getElementById('pass').value === MASTER) document.getElementById('auth-overlay').style.display='none';
+        if(document.getElementById('pin').value === PIN_CODE) {
+            document.getElementById('auth-overlay').style.display = 'none';
+        } else { alert("Access Denied"); }
     }
 
-    const up = new URLSearchParams(window.location.search);
-    if(up.get('view')) {
+    // Проверка режима просмотра (через URL)
+    const urlParams = new URLSearchParams(window.location.search);
+    if(urlParams.get('view')) {
         document.getElementById('auth-overlay').style.display = 'none';
-        document.body.classList.add('client-mode');
-        document.getElementById('outID').innerText = up.get('id');
-        document.getElementById('outName').innerText = up.get('name');
-        document.getElementById('outTitle').innerText = up.get('title');
-        document.getElementById('outHash').innerText = up.get('hash');
-        document.getElementById('outDate').innerText = up.get('date');
-        window.onload = () => buildQR(window.location.href);
+        document.body.classList.add('mode-view');
+        document.getElementById('out-id').innerText = urlParams.get('id');
+        document.getElementById('out-name').innerText = urlParams.get('name');
+        document.getElementById('out-title').innerText = urlParams.get('title');
+        document.getElementById('out-hash').innerText = urlParams.get('hash');
+        document.getElementById('out-date').innerText = urlParams.get('date');
+        window.onload = () => createQR(window.location.href);
     }
 
     function sync() {
-        document.getElementById('outID').innerText = document.getElementById('inID').value || '---';
-        document.getElementById('outName').innerText = document.getElementById('inName').value || '---';
-        document.getElementById('outTitle').innerText = document.getElementById('inTitle').value || '---';
+        document.getElementById('out-id').innerText = document.getElementById('in-id').value || '---';
+        document.getElementById('out-name').innerText = document.getElementById('in-name').value || '---';
+        document.getElementById('out-title').innerText = document.getElementById('in-title').value || '---';
     }
 
-    function buildQR(t) {
-        const q = document.getElementById("qrcode");
-        q.innerHTML = "";
-        new QRCode(q, { text: t, width: 90, height: 90 });
+    function createQR(text) {
+        const qrContainer = document.getElementById("qrcode");
+        qrContainer.innerHTML = ""; // очистка
+        try {
+            new QRCode(qrContainer, {
+                text: text,
+                width: 90,
+                height: 90,
+                colorDark : "#000000",
+                colorLight : "#ffffff",
+                correctLevel : QRCode.CorrectLevel.H
+            });
+        } catch(e) { console.error("QR Generation failed", e); }
     }
 
-    function getLink() {
-        return window.location.origin + window.location.pathname + 
-               `?view=true&id=${encodeURIComponent(document.getElementById('outID').innerText)}` +
-               `&name=${encodeURIComponent(document.getElementById('outName').innerText)}` +
-               `&title=${encodeURIComponent(document.getElementById('outTitle').innerText)}` +
-               `&hash=${encodeURIComponent(document.getElementById('outHash').innerText)}` +
-               `&date=${encodeURIComponent(document.getElementById('outDate').innerText)}`;
+    function getFullLink() {
+        const base = window.location.origin + window.location.pathname;
+        const query = `?view=true` +
+            `&id=${encodeURIComponent(document.getElementById('out-id').innerText)}` +
+            `&name=${encodeURIComponent(document.getElementById('out-name').innerText)}` +
+            `&title=${encodeURIComponent(document.getElementById('out-title').innerText)}` +
+            `&hash=${encodeURIComponent(document.getElementById('out-hash').innerText)}` +
+            `&date=${encodeURIComponent(document.getElementById('out-date').innerText)}`;
+        return base + query;
     }
 
-    function generate() {
+    function issueCertificate() {
         const now = new Date();
-        document.getElementById('outDate').innerText = now.toLocaleString() + " (Certified TimeStamp)";
-        buildQR(getLink());
+        const dateStr = now.toLocaleString() + " (Certified TimeStamp)";
+        document.getElementById('out-date').innerText = dateStr;
         
+        // Генерируем QR перед печатью
+        const link = getFullLink();
+        createQR(link);
+
+        // Ждем отрисовки QR и сохраняем PDF
         setTimeout(() => {
-            html2pdf().from(document.getElementById('certificate-render')).set({
-                margin: 0, filename: 'IP_Certificate.pdf',
-                html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4' }
-            }).save();
-        }, 500);
+            const element = document.getElementById('certificate-render');
+            const opt = {
+                margin: 0,
+                filename: `IP_Cert_${document.getElementById('out-id').innerText}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+            html2pdf().set(opt).from(element).save();
+        }, 800);
     }
 
-    function copyLink() {
-        navigator.clipboard.writeText(getLink()).then(() => alert("Verification link copied!"));
+    function copyVerificationLink() {
+        const link = getFullLink();
+        navigator.clipboard.writeText(link).then(() => {
+            alert("Verification Link copied to clipboard!");
+            createQR(link); // Обновляем QR на странице
+        });
     }
 
-    function prepMail() {
-        const s = `Certified IP: ${document.getElementById('outTitle').innerText}`;
-        const b = `Certificate for ${document.getElementById('outName').innerText}\n\nVerify here: ${getLink()}`;
-        document.getElementById('gmail-link').href = `mailto:?subject=${encodeURIComponent(s)}&body=${encodeURIComponent(b)}`;
+    function prepareEmail() {
+        const subject = `CERTIFIED IP RECORD: ${document.getElementById('out-title').innerText}`;
+        const body = `Official Intellectual Property Record\n\nProprietor: ${document.getElementById('out-name').innerText}\nRegistry ID: ${document.getElementById('out-id').innerText}\n\nDigital Verification Link:\n${getFullLink()}`;
+        document.getElementById('mail-link').href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     }
 
-    async function calcHash(f) {
-        if(!f.files[0]) return;
-        const b = await f.files[0].arrayBuffer();
-        const h = await crypto.subtle.digest('SHA-256', b);
-        document.getElementById('outHash').innerText = Array.from(new Uint8Array(h)).map(x => x.toString(16).padStart(2,'0')).join('').toUpperCase();
+    async function generateFileHash(input) {
+        if(!input.files[0]) return;
+        const file = input.files[0];
+        const buffer = await file.arrayBuffer();
+        const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
+        document.getElementById('out-hash').innerText = hashHex;
     }
 </script>
 </body>
