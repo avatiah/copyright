@@ -1,191 +1,656 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <title>Copyright Certificate Pro</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <style>
-        :root { --panel-bg: #2c3e50; --accent: #27ae60; }
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; display: flex; background: #525659; height: 100vh; overflow: hidden; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Certificate Pro</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink: #111;
+  --paper: #f7f4ef;
+  --gold: #b8972a;
+  --gold-light: #e8d98a;
+  --panel: #1a1a1a;
+  --panel-border: #2e2e2e;
+  --field-bg: #242424;
+  --muted: #888;
+  --danger: #c0392b;
+  --danger-bg: #2a1212;
+  --success: #27ae60;
+  --radius: 6px;
+}
 
-        .admin-panel { 
-            width: 380px; background: var(--panel-bg); color: white; padding: 25px; 
-            display: flex; flex-direction: column; gap: 15px; box-shadow: 5px 0 15px rgba(0,0,0,0.3);
-            z-index: 100; overflow-y: auto;
-        }
-        .admin-panel h2 { margin: 0 0 10px 0; font-size: 1.2rem; border-bottom: 1px solid #455d7a; padding-bottom: 10px; }
-        
-        .field-group { display: flex; flex-direction: column; gap: 5px; }
-        label { font-size: 0.7rem; text-transform: uppercase; color: #bdc3c7; }
-        input { padding: 10px; border-radius: 4px; border: none; background: #34495e; color: white; }
-        
-        button { padding: 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.3s; }
-        .btn-pdf { background: var(--accent); color: white; margin-top: 10px; }
-        .btn-pdf:hover { background: #2ecc71; }
-        .btn-link { background: #2980b9; color: white; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
 
-        .preview-viewport { flex: 1; display: flex; justify-content: center; align-items: flex-start; padding: 20px; overflow-y: auto; }
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: #111;
+  color: #fff;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+}
 
-        /* A4 Контейнер */
-        #certificate-render {
-            width: 210mm; height: 296mm; /* Уменьшено на 1мм для запаса */
-            background: white; padding: 15mm;
-            box-sizing: border-box; font-family: 'Times New Roman', serif; 
-            position: relative; display: flex; flex-direction: column;
-        }
+/* ─── AUTH OVERLAY ─── */
+#auth-overlay {
+  position: fixed; inset: 0; z-index: 9999;
+  background: #0d0d0d;
+  display: flex; align-items: center; justify-content: center;
+}
+.auth-box {
+  width: 360px;
+  border: 1px solid #2a2a2a;
+  border-radius: 12px;
+  padding: 40px 36px;
+  background: #161616;
+}
+.auth-logo {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 22px;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: var(--gold);
+  text-align: center;
+  margin-bottom: 6px;
+}
+.auth-sub {
+  font-size: 11px;
+  color: var(--muted);
+  text-align: center;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 32px;
+}
+.auth-field { margin-bottom: 16px; }
+.auth-field label { font-size: 11px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; display: block; margin-bottom: 6px; }
+.auth-field input {
+  width: 100%; padding: 11px 14px;
+  background: #1f1f1f; border: 1px solid #2e2e2e;
+  border-radius: var(--radius); color: #fff; font-size: 14px;
+  font-family: 'DM Sans', sans-serif; outline: none;
+  transition: border-color 0.2s;
+}
+.auth-field input:focus { border-color: var(--gold); }
+.auth-error {
+  font-size: 12px; color: #e74c3c;
+  background: var(--danger-bg); border: 1px solid #5a1a1a;
+  border-radius: var(--radius); padding: 8px 12px;
+  margin-bottom: 16px; display: none;
+}
+.auth-btn {
+  width: 100%; padding: 12px; margin-top: 4px;
+  background: var(--gold); color: #111;
+  border: none; border-radius: var(--radius);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px; font-weight: 500;
+  letter-spacing: 1px; text-transform: uppercase;
+  cursor: pointer; transition: opacity 0.2s;
+}
+.auth-btn:hover { opacity: 0.85; }
+.auth-attempts { font-size: 11px; color: #555; text-align: center; margin-top: 14px; }
 
-        .main-border { border: 8px double #1a1a1a; height: 100%; padding: 10mm; display: flex; flex-direction: column; box-sizing: border-box; }
-        .header { text-align: center; border-bottom: 2px solid #1a1a1a; padding-bottom: 15px; margin-bottom: 25px; }
-        .header h1 { font-size: 38pt; margin: 0; text-transform: uppercase; letter-spacing: 2px; }
-        
-        .cert-content { flex-grow: 1; font-size: 16pt; line-height: 1.6; color: #1a1a1a; }
-        .data-line { font-weight: bold; border-bottom: 1px solid #000; display: inline-block; min-width: 200px; padding: 0 5px; }
+/* ─── MAIN LAYOUT ─── */
+#app { display: flex; width: 100%; height: 100vh; }
 
-        .hash-section { background: #f4f4f4; border-left: 5px solid #1a1a1a; padding: 12px; margin-top: 25px; }
-        .hash-title { font-size: 10pt; font-weight: bold; margin-bottom: 5px; }
-        .hash-value { font-family: 'Courier New', monospace; font-size: 10pt; word-break: break-all; }
+/* ─── PANEL ─── */
+.panel {
+  width: 320px; min-width: 320px;
+  background: var(--panel);
+  border-right: 1px solid var(--panel-border);
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+.panel-header {
+  padding: 24px 24px 20px;
+  border-bottom: 1px solid var(--panel-border);
+}
+.panel-logo {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 18px; letter-spacing: 3px;
+  color: var(--gold); text-transform: uppercase;
+}
+.panel-sub { font-size: 10px; color: #444; letter-spacing: 2px; text-transform: uppercase; margin-top: 2px; }
+.panel-scroll { flex: 1; overflow-y: auto; padding: 20px 24px; display: flex; flex-direction: column; gap: 16px; }
+.panel-scroll::-webkit-scrollbar { width: 4px; }
+.panel-scroll::-webkit-scrollbar-track { background: transparent; }
+.panel-scroll::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
 
-        .footer { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 30px; }
-        .signature-area { text-align: center; width: 220px; min-height: 90px; }
-        #sig-output { max-height: 80px; max-width: 200px; display: none; margin-bottom: -5px; }
-        .sig-line { border-top: 2px solid #000; padding-top: 5px; font-weight: bold; }
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field label { font-size: 10px; color: var(--muted); letter-spacing: 1.5px; text-transform: uppercase; }
+.field input[type="text"],
+.field input[type="password"] {
+  padding: 10px 12px;
+  background: var(--field-bg); border: 1px solid #333;
+  border-radius: var(--radius); color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 13px;
+  outline: none; transition: border-color 0.2s;
+}
+.field input:focus { border-color: var(--gold); }
+.field input.invalid { border-color: var(--danger) !important; }
 
-        body.client-view .admin-panel { display: none; }
-        body.client-view .preview-viewport { padding: 0; background: white; }
-    </style>
+.field-error { font-size: 11px; color: #e74c3c; display: none; }
+.field-error.show { display: block; }
+
+.file-label {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; background: var(--field-bg);
+  border: 1px dashed #333; border-radius: var(--radius);
+  cursor: pointer; font-size: 12px; color: var(--muted);
+  transition: border-color 0.2s, color 0.2s;
+}
+.file-label:hover { border-color: var(--gold); color: #fff; }
+.file-label input { display: none; }
+.file-status { font-size: 11px; color: var(--success); display: none; }
+.file-status.show { display: block; }
+
+.divider { height: 1px; background: var(--panel-border); }
+
+.panel-footer { padding: 16px 24px 20px; display: flex; flex-direction: column; gap: 8px; border-top: 1px solid var(--panel-border); }
+
+.btn {
+  padding: 11px; border: none; border-radius: var(--radius);
+  cursor: pointer; font-family: 'DM Sans', sans-serif;
+  font-size: 12px; font-weight: 500; letter-spacing: 1px;
+  text-transform: uppercase; transition: opacity 0.2s, transform 0.1s;
+}
+.btn:hover { opacity: 0.85; }
+.btn:active { transform: scale(0.98); }
+.btn-primary { background: var(--gold); color: #111; }
+.btn-secondary { background: #1f2d3d; color: #5dade2; border: 1px solid #1f4060; }
+.btn-danger { background: transparent; color: #e74c3c; border: 1px solid #5a1a1a; font-size: 11px; padding: 7px; }
+
+.logout-btn {
+  position: absolute; top: 16px; right: 16px;
+  font-size: 11px; color: #444; background: none;
+  border: 1px solid #2a2a2a; border-radius: 4px;
+  padding: 5px 10px; cursor: pointer; font-family: 'DM Sans', sans-serif;
+  transition: color 0.2s;
+}
+.logout-btn:hover { color: #e74c3c; border-color: #5a1a1a; }
+
+/* ─── PREVIEW ─── */
+.preview-wrap {
+  flex: 1; display: flex; align-items: flex-start; justify-content: center;
+  overflow-y: auto; padding: 30px; background: #222;
+  position: relative;
+}
+
+/* ─── CERTIFICATE ─── */
+#cert {
+  width: 210mm; min-height: 297mm;
+  background: var(--paper);
+  padding: 16mm 16mm 14mm;
+  font-family: 'Cormorant Garamond', serif;
+  color: var(--ink); position: relative;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  flex-shrink: 0;
+}
+
+.cert-outer {
+  border: 1.5px solid var(--ink);
+  height: 100%; min-height: calc(297mm - 30mm);
+  padding: 10mm 11mm;
+  display: flex; flex-direction: column;
+  position: relative;
+}
+.cert-corner {
+  position: absolute; width: 16px; height: 16px;
+  border-color: var(--gold); border-style: solid;
+}
+.cert-corner.tl { top: 6px; left: 6px; border-width: 2px 0 0 2px; }
+.cert-corner.tr { top: 6px; right: 6px; border-width: 2px 2px 0 0; }
+.cert-corner.bl { bottom: 6px; left: 6px; border-width: 0 0 2px 2px; }
+.cert-corner.br { bottom: 6px; right: 6px; border-width: 0 2px 2px 0; }
+
+.cert-header { text-align: center; margin-bottom: 8mm; }
+.cert-eyebrow {
+  font-family: 'DM Mono', monospace; font-size: 8pt;
+  letter-spacing: 5px; color: var(--gold); text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.cert-title { font-size: 38pt; font-weight: 600; letter-spacing: 2px; line-height: 1; text-transform: uppercase; }
+.cert-subtitle { font-size: 10pt; letter-spacing: 8px; text-transform: uppercase; margin-top: 4px; color: #555; }
+
+.cert-rule { border: none; border-top: 1px solid var(--ink); margin: 5mm 0; }
+.cert-rule.gold { border-top-color: var(--gold); border-top-width: 0.5px; margin: 2mm 0; }
+
+.cert-body { flex-grow: 1; font-size: 13pt; line-height: 1.7; }
+
+.cert-label { font-family: 'DM Mono', monospace; font-size: 7.5pt; letter-spacing: 2px; text-transform: uppercase; color: #777; margin-bottom: 1mm; margin-top: 5mm; }
+.cert-value {
+  font-size: 20pt; font-weight: 600; font-style: italic;
+  border-bottom: 1px solid #999; padding-bottom: 1mm;
+  min-height: 1.4em; display: block; color: var(--ink);
+}
+.cert-value.name { font-style: normal; font-size: 18pt; }
+.cert-value.mono {
+  font-family: 'DM Mono', monospace; font-size: 8pt; font-weight: 400; font-style: normal;
+  word-break: break-all; letter-spacing: 0.5px; line-height: 1.5; color: #333;
+}
+
+.cert-meta-row { display: flex; justify-content: space-between; margin-top: 6mm; font-size: 9pt; }
+.cert-meta-item { }
+.cert-meta-label { font-family: 'DM Mono', monospace; font-size: 7pt; letter-spacing: 2px; text-transform: uppercase; color: #888; }
+.cert-meta-val { font-size: 10pt; font-weight: 600; margin-top: 1mm; }
+
+.cert-footer { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 8mm; }
+.sig-zone { text-align: center; }
+#sig-img { max-height: 55px; max-width: 180px; display: none; margin-bottom: 3px; }
+.sig-line { border-top: 1px solid var(--ink); padding-top: 4px; font-size: 8pt; letter-spacing: 1px; text-transform: uppercase; color: #555; width: 180px; }
+
+.cert-seal {
+  width: 70px; height: 70px; border-radius: 50%;
+  border: 2px solid var(--gold);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  font-family: 'DM Mono', monospace; font-size: 6pt; letter-spacing: 1px;
+  text-transform: uppercase; color: var(--gold); text-align: center; line-height: 1.5;
+}
+
+/* ─── CLIENT VIEW ─── */
+body.client-view .panel,
+body.client-view .logout-btn { display: none; }
+body.client-view .preview-wrap { padding: 0; background: white; }
+body.client-view #app { background: white; }
+
+/* ─── TOAST ─── */
+#toast {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+  background: #1a2a1a; border: 1px solid #2a5a2a; color: #5dbb5d;
+  padding: 10px 20px; border-radius: 6px; font-size: 13px;
+  opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 9998;
+}
+#toast.show { opacity: 1; }
+</style>
 </head>
-<body id="b">
+<body id="body">
 
-<div class="admin-panel">
-    <h2>Настройки</h2>
-    <div class="field-group">
-        <label>ID</label>
-        <input type="text" id="inID" placeholder="2026-NFT-01" oninput="sync()">
+<!-- AUTH OVERLAY -->
+<div id="auth-overlay">
+  <div class="auth-box">
+    <div class="auth-logo">CERTIFICATE</div>
+    <div class="auth-sub">Pro — Authorized Access</div>
+    <div id="auth-error" class="auth-error">Неверный логин или пароль</div>
+    <div class="auth-field">
+      <label>Логин</label>
+      <input type="text" id="a-user" placeholder="admin" autocomplete="username">
     </div>
-    <div class="field-group">
-        <label>Владелец</label>
-        <input type="text" id="inName" placeholder="Grill (avatiah)" oninput="sync()">
+    <div class="auth-field">
+      <label>Пароль</label>
+      <input type="password" id="a-pass" placeholder="••••••••" autocomplete="current-password"
+        onkeydown="if(event.key==='Enter') doLogin()">
     </div>
-    <div class="field-group">
-        <label>Работа</label>
-        <input type="text" id="inTitle" placeholder="Golden Lion" oninput="sync()">
-    </div>
-    <div class="field-group">
-        <label>Файл для Хеша</label>
-        <input type="file" onchange="makeHash(this)">
-    </div>
-    <div class="field-group">
-        <label>Подпись (PNG)</label>
-        <input type="file" onchange="makeSig(this)">
-    </div>
-
-    <button class="btn-pdf" onclick="generatePDF()">СКАЧАТЬ PDF</button>
-    <button class="btn-link" onclick="copyLink()">ССЫЛКА ПРЕДОСМОТРА</button>
+    <button class="auth-btn" onclick="doLogin()">Войти</button>
+    <div class="auth-attempts" id="attempts-info"></div>
+  </div>
 </div>
 
-<div class="preview-viewport">
-    <div id="certificate-render">
-        <div class="main-border">
-            <div class="header">
-                <h1>CERTIFICATE</h1>
-                <p style="letter-spacing: 10px; font-size: 12pt; margin: 5px 0 0;">OF AUTHENTICITY</p>
-            </div>
-            <div class="cert-content">
-                <p>Registration No: <span id="outID" class="data-line">PENDING</span></p>
-                <p>Creative work titled:</p>
-                <div id="outTitle" class="data-line" style="font-size: 20pt; font-style: italic;">[WORK TITLE]</div>
-                <p>Property of:</p>
-                <div id="outName" class="data-line" style="font-size: 20pt;">[PROPRIETOR NAME]</div>
-                <p style="margin-top: 20px;">Date: <span id="currDate" style="font-weight: bold;"></span></p>
-                <div class="hash-section">
-                    <div class="hash-title">SHA-256 DIGITAL FINGERPRINT</div>
-                    <div id="outHash" class="hash-value">No file selected</div>
-                </div>
-            </div>
-            <div class="footer">
-                <div class="signature-area">
-                    <img id="sig-output">
-                    <div class="sig-line">Authorized Signature</div>
-                </div>
-                <div style="text-align: right; font-size: 11pt;">
-                    Location: <strong>Israel</strong>
-                </div>
-            </div>
+<!-- APP -->
+<div id="app" style="display:none; position:relative;">
+
+  <button class="logout-btn" onclick="doLogout()">Выйти</button>
+
+  <!-- PANEL -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-logo">Certificate Pro</div>
+      <div class="panel-sub">Редактор сертификата</div>
+    </div>
+    <div class="panel-scroll">
+
+      <div class="field">
+        <label>Регистрационный ID *</label>
+        <input type="text" id="inID" placeholder="2026-COA-001" oninput="syncField('id')">
+        <span class="field-error" id="err-id">Введите регистрационный ID</span>
+      </div>
+
+      <div class="field">
+        <label>Владелец / Автор *</label>
+        <input type="text" id="inName" placeholder="Grill (avatiah)" oninput="syncField('name')">
+        <span class="field-error" id="err-name">Укажите имя владельца</span>
+      </div>
+
+      <div class="field">
+        <label>Название работы *</label>
+        <input type="text" id="inTitle" placeholder="Golden Lion" oninput="syncField('title')">
+        <span class="field-error" id="err-title">Введите название работы</span>
+      </div>
+
+      <div class="field">
+        <label>Серия / Коллекция</label>
+        <input type="text" id="inSeries" placeholder="NFT Genesis Collection" oninput="syncField('series')">
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="field">
+        <label>Файл для SHA-256 хеша *</label>
+        <label class="file-label">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Выбрать файл
+          <input type="file" onchange="makeHash(this)">
+        </label>
+        <span class="file-status" id="hash-status">✓ Хеш вычислен</span>
+        <span class="field-error" id="err-hash">Необходимо выбрать файл для хеша</span>
+      </div>
+
+      <div class="field">
+        <label>Подпись (PNG / JPG)</label>
+        <label class="file-label">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          Загрузить подпись
+          <input type="file" accept="image/*" onchange="loadSig(this)">
+        </label>
+        <span class="file-status" id="sig-status">✓ Подпись загружена</span>
+      </div>
+
+    </div>
+    <div class="panel-footer">
+      <button class="btn btn-primary" onclick="generatePDF()">⬇ Скачать PDF</button>
+      <button class="btn btn-secondary" onclick="copyLink()">⎘ Ссылка для просмотра</button>
+      <button class="btn btn-danger" onclick="resetForm()">Очистить форму</button>
+    </div>
+  </div>
+
+  <!-- PREVIEW -->
+  <div class="preview-wrap">
+    <div id="cert">
+      <div class="cert-outer">
+        <div class="cert-corner tl"></div>
+        <div class="cert-corner tr"></div>
+        <div class="cert-corner bl"></div>
+        <div class="cert-corner br"></div>
+
+        <div class="cert-header">
+          <div class="cert-eyebrow">Certificate of Authenticity</div>
+          <div class="cert-title">Certificate</div>
+          <div class="cert-subtitle">of Authenticity</div>
         </div>
+
+        <hr class="cert-rule">
+        <hr class="cert-rule gold">
+
+        <div class="cert-body">
+          <div class="cert-label">Registration No.</div>
+          <span id="outID" class="cert-value mono" style="font-size:13pt;">PENDING</span>
+
+          <div class="cert-label">Creative work</div>
+          <span id="outTitle" class="cert-value">[WORK TITLE]</span>
+
+          <div class="cert-label">Rightful owner / author</div>
+          <span id="outName" class="cert-value name">[PROPRIETOR NAME]</span>
+
+          <div class="cert-label">Series / Collection</div>
+          <span id="outSeries" class="cert-value name" style="font-size:14pt; color:#555;">—</span>
+
+          <div class="cert-meta-row">
+            <div class="cert-meta-item">
+              <div class="cert-meta-label">Date of Issue</div>
+              <div class="cert-meta-val" id="outDate">—</div>
+            </div>
+            <div class="cert-meta-item" style="text-align:right;">
+              <div class="cert-meta-label">Location</div>
+              <div class="cert-meta-val">Israel</div>
+            </div>
+          </div>
+
+          <div class="cert-label" style="margin-top:6mm;">SHA-256 Digital Fingerprint</div>
+          <span id="outHash" class="cert-value mono">No file selected — upload file to generate hash</span>
+        </div>
+
+        <hr class="cert-rule" style="margin-top:6mm;">
+
+        <div class="cert-footer">
+          <div class="sig-zone">
+            <img id="sig-img" alt="Signature">
+            <div class="sig-line">Authorized Signature</div>
+          </div>
+          <div class="cert-seal">
+            <div style="font-size:8pt;">✦</div>
+            <div>Certified</div>
+            <div>Authentic</div>
+          </div>
+        </div>
+
+      </div>
     </div>
+  </div>
+
 </div>
+
+<div id="toast">Ссылка скопирована!</div>
 
 <script>
-    let rawSig = localStorage.getItem('lastSig') || "";
-    if(rawSig) {
-        const img = document.getElementById('sig-output');
-        img.src = rawSig; img.style.display = 'inline-block';
-    }
+/* ── CONFIG (меняйте только здесь) ── */
+const CREDENTIALS = [
+  { user: 'admin',  pass: 'cert2026' },
+  { user: 'grill',  pass: 'avatiah'  }
+];
+const SESSION_KEY  = 'cert_session';
+const SIG_KEY      = 'cert_sig';
+const MAX_ATTEMPTS = 5;
+const LOCK_MINUTES = 15;
 
-    document.getElementById('currDate').innerText = new Date().toLocaleDateString('en-GB', {day:'numeric', month:'long', year:'numeric'});
+/* ── AUTH ── */
+let failCount = parseInt(sessionStorage.getItem('cert_fails') || '0');
+let lockUntil = parseInt(sessionStorage.getItem('cert_lock') || '0');
 
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('view')) {
-        document.body.classList.add('client-view');
-        document.getElementById('outID').innerText = urlParams.get('id');
-        document.getElementById('outName').innerText = urlParams.get('name');
-        document.getElementById('outTitle').innerText = urlParams.get('title');
-        document.getElementById('outHash').innerText = urlParams.get('hash');
-    }
+function isLocked() {
+  if (Date.now() < lockUntil) return true;
+  if (lockUntil && Date.now() >= lockUntil) {
+    sessionStorage.removeItem('cert_lock');
+    sessionStorage.removeItem('cert_fails');
+    failCount = 0; lockUntil = 0;
+  }
+  return false;
+}
 
-    function sync() {
-        document.getElementById('outID').innerText = document.getElementById('inID').value || 'PENDING';
-        document.getElementById('outName').innerText = document.getElementById('inName').value || '[NAME]';
-        document.getElementById('outTitle').innerText = document.getElementById('inTitle').value || '[TITLE]';
-    }
+function updateAttemptsUI() {
+  const info = document.getElementById('attempts-info');
+  if (isLocked()) {
+    const mins = Math.ceil((lockUntil - Date.now()) / 60000);
+    info.textContent = `Доступ заблокирован на ${mins} мин.`;
+  } else if (failCount > 0) {
+    info.textContent = `Неверных попыток: ${failCount} / ${MAX_ATTEMPTS}`;
+  } else { info.textContent = ''; }
+}
 
-    async function makeHash(input) {
-        if(!input.files[0]) return;
-        const buffer = await input.files[0].arrayBuffer();
-        const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
-        const hashArray = Array.from(new Uint8Array(hashBuffer));
-        const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
-        document.getElementById('outHash').innerText = hashHex;
+function doLogin() {
+  if (isLocked()) { updateAttemptsUI(); return; }
+  const u = document.getElementById('a-user').value.trim();
+  const p = document.getElementById('a-pass').value;
+  const ok = CREDENTIALS.some(c => c.user === u && c.pass === p);
+  if (ok) {
+    sessionStorage.setItem(SESSION_KEY, 'true');
+    sessionStorage.removeItem('cert_fails');
+    sessionStorage.removeItem('cert_lock');
+    showApp();
+  } else {
+    failCount++;
+    sessionStorage.setItem('cert_fails', failCount);
+    if (failCount >= MAX_ATTEMPTS) {
+      lockUntil = Date.now() + LOCK_MINUTES * 60000;
+      sessionStorage.setItem('cert_lock', lockUntil);
     }
+    document.getElementById('auth-error').style.display = 'block';
+    document.getElementById('a-pass').value = '';
+    updateAttemptsUI();
+  }
+}
 
-    function makeSig(input) {
-        if(!input.files[0]) return;
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            rawSig = e.target.result;
-            localStorage.setItem('lastSig', rawSig);
-            const img = document.getElementById('sig-output');
-            img.src = rawSig; img.style.display = 'inline-block';
-        };
-        reader.readAsDataURL(input.files[0]);
-    }
+function doLogout() {
+  sessionStorage.removeItem(SESSION_KEY);
+  location.reload();
+}
 
-    function generatePDF() {
-        const element = document.getElementById('certificate-render');
-        const opt = {
-            margin: 0,
-            filename: 'Certificate.pdf',
-            image: { type: 'jpeg', quality: 1 },
-            html2canvas: { scale: 2, useCORS: true },
-            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-            pagebreak: { mode: 'avoid' }
-        };
-        
-        html2pdf().set(opt).from(element).toPdf().get('pdf').then(function(pdf) {
-            var totalPages = pdf.internal.getNumberOfPages();
-            for (var i = totalPages; i > 1; i--) { pdf.deletePage(i); }
-        }).save();
-    }
+function showApp() {
+  document.getElementById('auth-overlay').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+}
 
-    function copyLink() {
-        const id = encodeURIComponent(document.getElementById('outID').innerText);
-        const name = encodeURIComponent(document.getElementById('outName').innerText);
-        const title = encodeURIComponent(document.getElementById('outTitle').innerText);
-        const hash = encodeURIComponent(document.getElementById('outHash').innerText);
-        const cleanURL = window.location.origin + window.location.pathname + `?view=true&id=${id}&name=${name}&title=${title}&hash=${hash}`;
-        navigator.clipboard.writeText(cleanURL);
-        alert("Ссылка скопирована!");
+/* ── INIT ── */
+const params = new URLSearchParams(window.location.search);
+if (params.get('view')) {
+  document.body.classList.add('client-view');
+  document.getElementById('auth-overlay').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+  document.getElementById('outID').textContent    = decode(params.get('id'));
+  document.getElementById('outTitle').textContent  = decode(params.get('title'));
+  document.getElementById('outName').textContent   = decode(params.get('name'));
+  document.getElementById('outSeries').textContent = decode(params.get('series')) || '—';
+  document.getElementById('outHash').textContent   = decode(params.get('hash'));
+  document.getElementById('outDate').textContent   = decode(params.get('date'));
+} else if (sessionStorage.getItem(SESSION_KEY) === 'true') {
+  showApp();
+}
+
+updateAttemptsUI();
+
+/* restore saved signature */
+const savedSig = localStorage.getItem(SIG_KEY);
+if (savedSig) {
+  const img = document.getElementById('sig-img');
+  img.src = savedSig; img.style.display = 'block';
+  document.getElementById('sig-status').classList.add('show');
+}
+
+/* ── SYNC ── */
+let currentHash = '';
+let issuedDate   = '';
+
+function syncField(type) {
+  if (type === 'id')     document.getElementById('outID').textContent     = val('inID')     || 'PENDING';
+  if (type === 'name')   document.getElementById('outName').textContent   = val('inName')   || '[PROPRIETOR NAME]';
+  if (type === 'title')  document.getElementById('outTitle').textContent  = val('inTitle')  || '[WORK TITLE]';
+  if (type === 'series') document.getElementById('outSeries').textContent = val('inSeries') || '—';
+  clearErr(type);
+}
+
+function val(id) { return document.getElementById(id).value.trim(); }
+
+/* ── HASH ── */
+async function makeHash(input) {
+  if (!input.files[0]) return;
+  const buf  = await input.files[0].arrayBuffer();
+  const hash = await crypto.subtle.digest('SHA-256', buf);
+  const hex  = Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2,'0')).join('').toUpperCase();
+  currentHash = hex;
+  document.getElementById('outHash').textContent = hex;
+  document.getElementById('hash-status').classList.add('show');
+  clearErr('hash');
+}
+
+/* ── SIGNATURE ── */
+function loadSig(input) {
+  if (!input.files[0]) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const data = e.target.result;
+    localStorage.setItem(SIG_KEY, data);
+    const img = document.getElementById('sig-img');
+    img.src = data; img.style.display = 'block';
+    document.getElementById('sig-status').classList.add('show');
+  };
+  reader.readAsDataURL(input.files[0]);
+}
+
+/* ── VALIDATION ── */
+function validate() {
+  let ok = true;
+  const checks = [
+    { field: 'id',    inputId: 'inID',    errId: 'err-id'    },
+    { field: 'name',  inputId: 'inName',  errId: 'err-name'  },
+    { field: 'title', inputId: 'inTitle', errId: 'err-title' },
+  ];
+  checks.forEach(c => {
+    const el = document.getElementById(c.inputId);
+    if (!el.value.trim()) {
+      el.classList.add('invalid');
+      document.getElementById(c.errId).classList.add('show');
+      ok = false;
     }
+  });
+  if (!currentHash) {
+    document.getElementById('err-hash').classList.add('show');
+    ok = false;
+  }
+  return ok;
+}
+
+function clearErr(type) {
+  const map = { id:'inID,err-id', name:'inName,err-name', title:'inTitle,err-title', hash:'null,err-hash' };
+  const parts = (map[type]||'').split(',');
+  if (parts[0] !== 'null') document.getElementById(parts[0])?.classList.remove('invalid');
+  document.getElementById(parts[1])?.classList.remove('show');
+}
+
+/* ── FIXED DATE (set once, never changes) ── */
+function setDate() {
+  if (issuedDate) return;
+  issuedDate = new Date().toLocaleDateString('en-GB', { day:'numeric', month:'long', year:'numeric' });
+  document.getElementById('outDate').textContent = issuedDate;
+}
+
+/* ── PDF ── */
+function generatePDF() {
+  if (!validate()) return;
+  setDate();
+  const el = document.getElementById('cert');
+  html2pdf().set({
+    margin: 0, filename: `Certificate_${val('inID') || 'COA'}.pdf`,
+    image: { type: 'jpeg', quality: 1 },
+    html2canvas: { scale: 2, useCORS: true },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+    pagebreak: { mode: 'avoid' }
+  }).from(el).toPdf().get('pdf').then(pdf => {
+    const n = pdf.internal.getNumberOfPages();
+    for (let i = n; i > 1; i--) pdf.deletePage(i);
+  }).save();
+}
+
+/* ── COPY LINK ── */
+function copyLink() {
+  if (!validate()) return;
+  setDate();
+  const p = new URLSearchParams({
+    view: '1',
+    id:     val('inID'),
+    name:   val('inName'),
+    title:  val('inTitle'),
+    series: val('inSeries'),
+    hash:   currentHash,
+    date:   issuedDate
+  });
+  const url = `${location.origin}${location.pathname}?${p}`;
+  navigator.clipboard.writeText(url).then(() => showToast('Ссылка скопирована!'));
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+/* ── RESET ── */
+function resetForm() {
+  if (!confirm('Очистить все поля формы?')) return;
+  ['inID','inName','inTitle','inSeries'].forEach(id => document.getElementById(id).value = '');
+  currentHash = ''; issuedDate = '';
+  document.getElementById('outID').textContent    = 'PENDING';
+  document.getElementById('outTitle').textContent  = '[WORK TITLE]';
+  document.getElementById('outName').textContent   = '[PROPRIETOR NAME]';
+  document.getElementById('outSeries').textContent = '—';
+  document.getElementById('outHash').textContent   = 'No file selected — upload file to generate hash';
+  document.getElementById('outDate').textContent   = '—';
+  document.getElementById('hash-status').classList.remove('show');
+  ['err-id','err-name','err-title','err-hash'].forEach(id => {
+    document.getElementById(id).classList.remove('show');
+  });
+}
+
+/* ── HELPER ── */
+function decode(s) { try { return decodeURIComponent(s || ''); } catch { return s || ''; } }
 </script>
 </body>
 </html>
