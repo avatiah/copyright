@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Certificate Pro</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
@@ -58,7 +58,7 @@ body{font-family:'DM Sans',sans-serif;background:#111;color:#fff;height:100vh;ov
 /* PREVIEW */
 .preview-wrap{flex:1;display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:30px;background:#222;position:relative;}
 /* CERTIFICATE */
-#cert{width:210mm;min-height:297mm;background:var(--paper);padding:16mm 16mm 14mm;font-family:'Cormorant Garamond',serif;color:var(--ink);position:relative;box-shadow:0 20px 60px rgba(0,0,0,.5);flex-shrink:0;}
+#cert{width:210mm;min-height:297mm;background:var(--paper);padding:16mm 16mm 14mm;font-family:'Cormorant Garamond',serif;color:var(--ink);position:relative;box-shadow:0 20px 60px rgba(0,0,0,.5);flex-shrink:0; transform-origin: top center;}
 .cert-outer{border:1.5px solid var(--ink);height:100%;min-height:calc(297mm - 30mm);padding:10mm 11mm;display:flex;flex-direction:column;position:relative;}
 .cert-corner{position:absolute;width:16px;height:16px;border-color:var(--gold);border-style:solid;}
 .cert-corner.tl{top:6px;left:6px;border-width:2px 0 0 2px;}
@@ -85,11 +85,86 @@ body{font-family:'DM Sans',sans-serif;background:#111;color:#fff;height:100vh;ov
 #sig-img{max-height:60px;max-width:190px;display:block;margin-bottom:3px;}
 .sig-line{border-top:1px solid var(--ink);padding-top:4px;font-size:8pt;letter-spacing:1px;text-transform:uppercase;color:#555;width:190px;}
 .cert-seal{width:70px;height:70px;border-radius:50%;border:2px solid var(--gold);display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-size:6pt;letter-spacing:1px;text-transform:uppercase;color:var(--gold);text-align:center;line-height:1.5;}
+
+/* CLIENT VIEW OVERRIDES */
 body.client-view .panel,body.client-view .logout-btn{display:none;}
-body.client-view .preview-wrap{padding:0;background:white;}
+body.client-view .preview-wrap{padding:0;background:white; align-items: center;}
 body.client-view #app{background:white;}
+
+/* TOAST */
 #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1a2a1a;border:1px solid #2a5a2a;color:#5dbb5d;padding:10px 20px;border-radius:6px;font-size:13px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:9998;}
 #toast.show{opacity:1;}
+
+/* ─── ADAPTIVE / RESPONSIVE STYLES ─── */
+@media screen and (max-width: 900px) {
+    /* На планшетах и небольших ноутбуках скрываем панель в клиентском режиме и центрируем */
+    body.client-view .preview-wrap {
+        padding: 20px;
+        overflow: auto;
+    }
+}
+
+@media screen and (max-width: 768px) {
+    /* МОБИЛЬНАЯ АДАПТАЦИЯ */
+    
+    /* Разрешаем прокрутку body на мобильных */
+    body {
+        height: auto;
+        overflow: auto;
+        display: block;
+    }
+
+    #app {
+        display: block;
+        height: auto;
+    }
+
+    /* В режиме просмотра (клиент) убираем отступы и делаем сертификат резиновым */
+    body.client-view .preview-wrap {
+        padding: 10px;
+        display: block; /* Чтобы работал margin auto */
+        width: 100%;
+    }
+
+    #cert {
+        /* Магия адаптивности: уменьшаем сертификат под ширину экрана */
+        width: 100%;
+        min-height: auto;
+        aspect-ratio: 210 / 297; /* Сохраняем пропорции А4 */
+        padding: 5%;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        margin: 0 auto;
+    }
+    
+    .cert-outer {
+        border-width: 1px;
+        padding: 5%;
+        min-height: auto;
+    }
+
+    /* Уменьшаем шрифты для мобильных, чтобы текст влезал */
+    .cert-title { font-size: 24pt; }
+    .cert-subtitle { font-size: 8pt; letter-spacing: 4px; }
+    .cert-value { font-size: 14pt; }
+    .cert-value.name { font-size: 16pt; }
+    .cert-value.mono { font-size: 6pt; }
+    .cert-body { font-size: 10pt; }
+    
+    .cert-footer {
+        flex-direction: column;
+        align-items: center;
+        gap: 20px;
+    }
+    
+    .cert-seal {
+        width: 50px;
+        height: 50px;
+        font-size: 5pt;
+    }
+    
+    .sig-line { width: 120px; }
+    #sig-img { max-height: 40px; }
+}
 </style>
 </head>
 <body id="body">
@@ -195,7 +270,6 @@ Policy: 1.3.6.1.4.1.51483.2.1 · Hash: SHA-256 · TSA: freetsa.org
 <hr class="cert-rule" style="margin-top:5mm;">
 <div class="cert-footer">
 <div class="sig-zone">
-<!-- ИЗМЕНЕНО: Теперь используется внешний файл signature1.png -->
 <img id="sig-img" alt="Authorized Signature" src="signature1.png">
 <div class="sig-line">Authorized Signature</div>
 </div>
@@ -300,7 +374,6 @@ const tsaEl = document.getElementById('tsa-status');
 tsaEl.className = 'tsa-status pending show';
 tsaEl.textContent = '⏳ Запрос временной метки FreeTSA...';
 try {
-/* Собираем TSA Request (RFC 3161) вручную в DER */
 const tsaReq = buildTSARequest(hashBytes);
 const resp = await fetch('https://freetsa.org/tsr', {
 method: 'POST',
@@ -309,12 +382,11 @@ body: tsaReq
 });
 if (!resp.ok) throw new Error('HTTP ' + resp.status);
 const tsrBytes = new Uint8Array(await resp.arrayBuffer());
-/* Извлекаем данные из TSR (TSTInfo) */
 const parsed = parseTSR(tsrBytes);
 tsaData = {
 time:   parsed.genTime,
 serial: parsed.serial,
-token:  btoa(String.fromCharCode(...tsrBytes)) /* base64 токена */
+token:  btoa(String.fromCharCode(...tsrBytes))
 };
 document.getElementById('outTsaTime').textContent   = tsaData.time;
 document.getElementById('outTsaSerial').textContent = tsaData.serial;
@@ -322,11 +394,9 @@ document.getElementById('outTsaWrap').style.display = 'block';
 tsaEl.className = 'tsa-status ok show';
 tsaEl.textContent = '✓ TSA Timestamp получен от FreeTSA.org';
 } catch(e) {
-/* CORS fallback: если браузер заблокировал — показываем инструкцию */
 console.warn('TSA direct failed:', e);
 tsaEl.className = 'tsa-status err show';
 tsaEl.innerHTML = '⚠ FreeTSA недоступен напрямую из браузера (CORS).<br>Дата из системных часов зафиксирована как fallback.';
-/* Fallback: фиксируем текущее время как TSA */
 const now = new Date();
 tsaData = {
 time:   now.toUTCString() + ' (local clock fallback)',
@@ -339,24 +409,15 @@ document.getElementById('outTsaWrap').style.display = 'block';
 }
 }
 
-/* ── RFC 3161 TSA Request Builder (минимальный DER) ── */
 function buildTSARequest(hashBytes) {
-/* TimeStampReq ::= SEQUENCE {
-version INTEGER { v1(1) },
-messageImprint MessageImprint,  -- SHA-256
-nonce INTEGER OPTIONAL,
-certReq BOOLEAN DEFAULT FALSE }
-MessageImprint ::= SEQUENCE {
-hashAlgorithm AlgorithmIdentifier,  -- SHA-256 OID
-hashedMessage OCTET STRING } */
 const sha256OID = new Uint8Array([0x30,0x0d,
-0x06,0x09,0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x02,0x01, /* OID 2.16.840.1.101.3.4.2.1 */
+0x06,0x09,0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x02,0x01,
 0x05,0x00]);
 const hashOctet = encDER(0x04, hashBytes);
 const msgImprint = encDER(0x30, concat(sha256OID, hashOctet));
-const version = new Uint8Array([0x02,0x01,0x01]); /* INTEGER 1 */
+const version = new Uint8Array([0x02,0x01,0x01]);
 const nonce = encDER(0x02, new Uint8Array([Math.floor(Math.random()*256),Math.floor(Math.random()*256),Math.floor(Math.random()*256),Math.floor(Math.random()*256)]));
-const certReq = new Uint8Array([0x01,0x01,0xff]); /* BOOLEAN TRUE */
+const certReq = new Uint8Array([0x01,0x01,0xff]);
 const tsaReq = encDER(0x30, concat(version, msgImprint, nonce, certReq));
 return tsaReq;
 }
@@ -383,15 +444,12 @@ return out;
 }
 
 function parseTSR(bytes) {
-/* Ищем UTCTime/GeneralizedTime и INTEGER serial в DER структуре */
 let genTime = '—', serial = '—';
 try {
-/* GeneralizedTime tag = 0x18, UTCTime = 0x17 */
 for (let i = 0; i < bytes.length - 20; i++) {
 if ((bytes[i] === 0x18 || bytes[i] === 0x17) && bytes[i+1] >= 10 && bytes[i+1] <= 25) {
 const len = bytes[i+1];
 const str = String.fromCharCode(...bytes.slice(i+2, i+2+len));
-/* Парсим YYYYMMDDHHmmssZ или YYMMDDHHmmssZ */
 if (str.length >= 12) {
 let year, rest;
 if (bytes[i]===0x18) { year=str.slice(0,4); rest=str.slice(4); }
@@ -402,7 +460,6 @@ break;
 }
 }
 }
-/* Serial: ищем первый длинный INTEGER после начала */
 for (let i = 10; i < bytes.length - 10; i++) {
 if (bytes[i] === 0x02 && bytes[i+1] >= 4 && bytes[i+1] <= 20) {
 const len = bytes[i+1];
@@ -457,7 +514,7 @@ for(let i=n;i>1;i--) pdf.deletePage(i);
 }).save();
 }
 
-/* ── EMAIL (ИСПРАВЛЕНО) ── */
+/* ── EMAIL ── */
 function sendEmail() {
 if (!validate()) return;
 setDate();
@@ -468,8 +525,6 @@ const series = val('inSeries');
 const tx     = val('inTxHash');
 
 const subject = `Certificate of Authenticity — ${title} (${id})`;
-
-// Используем %0D%0A для корректных переносов строк в mailto
 const NL = '%0D%0A';
 let body = `CERTIFICATE OF AUTHENTICITY${NL}`;
 body += `===========================${NL}`;
@@ -497,7 +552,6 @@ body += `${NL}---${NL}`;
 body += `This certificate was generated by Certificate Pro.${NL}`;
 body += `The SHA-256 hash uniquely identifies the registered file.`;
 
-// Проверка на длину URL (браузеры часто ограничивают mailto ~2000 символов)
 const mailtoLink = `mailto:${OWNER_EMAIL}?subject=${encodeURIComponent(subject)}&body=${body}`;
 
 if (mailtoLink.length > 2000) {
@@ -508,7 +562,7 @@ window.location.href = mailtoLink;
 showToast('Почтовый клиент открыт!');
 }
 
-/* ── COPY LINK ── */
+/* ── COPY LINK (FIXED FOR LOCAL USE) ── */
 function copyLink() {
 if (!validate()) return;
 setDate();
@@ -518,8 +572,14 @@ series:val('inSeries'), hash:currentHash, date:issuedDate,
 tx:val('inTxHash')
 });
 if (tsaData) { p.set('tsaTime', tsaData.time); p.set('tsaSerial', tsaData.serial); }
-navigator.clipboard.writeText(`${location.origin}${location.pathname}?${p}`)
-.then(()=>showToast('Ссылка скопирована!'));
+
+// Берем текущий URL без параметров, чтобы ссылка работала даже при локальном открытии
+const baseUrl = window.location.href.split('?')[0];
+const fullLink = `${baseUrl}?${p}`;
+
+navigator.clipboard.writeText(fullLink)
+.then(()=>showToast('Ссылка скопирована! Отправьте её клиенту.'))
+.catch(()=>prompt("Скопируйте ссылку вручную:", fullLink));
 }
 
 /* ── RESET ── */
